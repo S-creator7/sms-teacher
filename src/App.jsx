@@ -8,9 +8,20 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
+import Curriculum from "./pages/Curriculum";
+import CurriculumDetail from "./pages/CurriculumDetail";
+import ChapterTopics from "./pages/ChapterTopics";
+import SessionManage from "./pages/SessionManage";
 import UserProfile from "./pages/UserProfile"
 import Timetable from "./pages/Timetable";
 import Attendance from "./pages/Attendance";
+import Exams from "./pages/Exams";
+import ExamResults from "./pages/ExamResults";
+import ExamResultDetail from "./pages/ExamResultDetail";
+import ExamResultEntry from "./pages/ExamResultEntry";
+import Reports from "./pages/Reports";
+import Leave from "./pages/Leave";
+import Posh from "./pages/Posh";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -117,6 +128,94 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Attendance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/curriculum"
+                element={
+                  <ProtectedRoute>
+                    <Curriculum />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/curriculum/detail/:subjectId"
+                element={
+                  <ProtectedRoute>
+                    <CurriculumDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/curriculum/chapter/:moduleId"
+                element={
+                  <ProtectedRoute>
+                    <ChapterTopics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sessions"
+                element={
+                  <ProtectedRoute>
+                    <SessionManage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/exams"
+                element={
+                  <ProtectedRoute>
+                    <Exams />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/exams/:schedulerId/entry"
+                element={
+                  <ProtectedRoute>
+                    <ExamResultEntry />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/results"
+                element={
+                  <ProtectedRoute>
+                    <ExamResults />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/results/:schedulerId"
+                element={
+                  <ProtectedRoute>
+                    <ExamResultDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/leave"
+                element={
+                  <ProtectedRoute>
+                    <Leave />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/posh"
+                element={
+                  <ProtectedRoute>
+                    <Posh />
                   </ProtectedRoute>
                 }
               />
