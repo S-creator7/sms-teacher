@@ -7,6 +7,24 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// ADMIN: GET /v1/school-admin/exam/list - list all exams (admin scope)
+export async function getAdminExamList(params = {}) {
+  const res = await axios.get(`${API_ENDPOINT}/v1/school-admin/exam/list`, {
+    headers: getAuthHeaders(),
+    params,
+  });
+  return res.data; // { status, code, message, resources: { data: { exams: [], pagination: {} } } }
+}
+
+// ADMIN: GET /v1/school-admin/report/report-card/list - list report cards
+export async function getReportCardList(params = {}) {
+  const res = await axios.get(`${API_ENDPOINT}/v1/school-admin/report/report-card/list`, {
+    headers: getAuthHeaders(),
+    params,
+  });
+  return res.data; // { status, code, message, resources: { data: [], pagination: {} } }
+}
+
 // GET /v1/teacher/exam - list exam schedules assigned to teacher
 export async function getTeacherExams(params = {}) {
   const res = await axios.get(`${API_ENDPOINT}/v1/teacher/exam`, {

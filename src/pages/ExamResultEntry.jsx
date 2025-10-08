@@ -1,18 +1,26 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { getSchedulerResults, submitBatchResults } from "../Utility/examApi";
 import toast from "react-hot-toast";
 
 export default function ExamResultEntry() {
   const { schedulerId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const passed = (location?.state || {});
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const [meta, setMeta] = useState({ max_marks: 0, exam_name: "Exam", subject_name: "-", class_name: "-", section_name: "-" });
+  const [meta, setMeta] = useState({ total_marks: 0, exam_name: "Exam", subject_name: "-", class_name: "-", section_name: "-" });
   const [rows, setRows] = useState([]);
+  const [ids, setIds] = useState({
+    scheduler_id: schedulerId,
+    exam_id: passed?.exam_id || "",
+    subject_id: passed?.subject_id || "",
+    classroom_id: passed?.classroom_id || "",
+  });
 
   async function load() {
     try {
@@ -22,17 +30,28 @@ export default function ExamResultEntry() {
       const list = Array.isArray(res?.resources?.data) ? res.resources.data : [];
       const first = list[0] || {};
       setMeta({
+        exam_name: first.exam_name,
+        subject_name: first.subject_name,
+        class_name: first.class_name,
+        section_name: first.section_name,
         total_marks: first.total_marks,
         pass_marks: first.pass_marks,
         exam_date: first.exam_date,
       });
 
+      // Capture IDs from API if present
+      setIds((prev) => ({
+        scheduler_id: schedulerId,
+        exam_id: prev.exam_id || first.exam_id || first.examId || "",
+        subject_id: prev.subject_id || first.subject_id || first.subjectId || "",
+        classroom_id: prev.classroom_id || first.classroom_id || first.classroomId || "",
+      }));
+
       setRows(
         list.map((s) => ({
           student_id: s.student_id,
           roll_no: s.roll_number,
-          first_name: s.student_name, // display only
-          last_name: "",
+          student_name: s.student_name,
           marks_obtained: s.obtained_marks ?? "",
           remarks: s.remarks ?? "",
         }))
@@ -53,6 +72,26 @@ export default function ExamResultEntry() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
+      // Client validation for marks
+      const max = Number(meta.total_marks) || undefined;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (r.marks_obtained === "" || r.marks_obtained === null || r.marks_obtained === undefined) continue; // allow empty -> will be treated as 0 below
+        const val = Number(r.marks_obtained);
+        if (Number.isNaN(val)) {
+          toast.error(`Row ${i + 1}: Marks must be a number`);
+          return;
+        }
+        if (val < 0) {
+          toast.error(`Row ${i + 1}: Marks cannot be negative`);
+          return;
+        }
+        if (max !== undefined && val > max) {
+          toast.error(`Row ${i + 1}: Marks cannot exceed total (${max})`);
+          return;
+        }
+      }
+
       setSubmitting(true);
       const results = rows.map((r) => ({
         student_id: r.student_id,
@@ -75,7 +114,7 @@ export default function ExamResultEntry() {
         <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{meta.exam_name} • {meta.subject_name}</h1>
-            <p className="text-xs text-gray-600">{meta.class_name} • Sec {meta.section_name} • Max {meta.max_marks ?? '-'}</p>
+            <p className="text-xs text-gray-600">{meta.class_name} • Sec {meta.section_name} • Max {meta.total_marks ?? '-'}</p>
           </div>
           <div className="flex gap-2">
             <Link to={`/results/${schedulerId}`} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm">View Results</Link>
@@ -116,13 +155,13 @@ export default function ExamResultEntry() {
                     <tr key={r.student_id || idx} className="hover:bg-gray-50">
                       <td className="px-3 py-2 border-b">{idx + 1}</td>
                       <td className="px-3 py-2 border-b">{r.roll_no}</td>
-                      <td className="px-3 py-2 border-b">{`${r.first_name || ""} ${r.last_name || ""}`}</td>
+                      <td className="px-3 py-2 border-b">{r.student_name || '-'}</td>
                       <td className="px-3 py-2 border-b w-32">
                         <input
                           type="number"
                           step="0.01"
                           min="0"
-                          max={meta.max_marks || undefined}
+                          max={meta.total_marks || undefined}
                           value={r.marks_obtained}
                           onChange={(e) => updateRow(idx, "marks_obtained", e.target.value)}
                           className="w-28 border border-gray-300 rounded-lg px-2 py-1 text-sm"

@@ -50,7 +50,12 @@ export default function Leave() {
     try {
       setLoadingHistory(true);
       const res = await getEmployeeLeaveList();
-      setLeaveHistory(res?.resources?.data ?? res?.data ?? []);
+      const arr = Array.isArray(res?.resources?.data)
+        ? res.resources.data
+        : Array.isArray(res?.data)
+        ? res.data
+        : [];
+      setLeaveHistory(arr);
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to load leave history");
     } finally {
@@ -62,7 +67,16 @@ export default function Leave() {
     try {
       setLoadingStudentLeaves(true);
       const res = await getStudentLeaveList();
-      setStudentLeaves(res?.resources?.data?.leaveList ?? res?.data?.leaveList ?? []);
+      const arr = Array.isArray(res?.resources?.data?.leaveList)
+        ? res.resources.data.leaveList
+        : Array.isArray(res?.resources?.data)
+        ? res.resources.data
+        : Array.isArray(res?.data?.leaveList)
+        ? res.data.leaveList
+        : Array.isArray(res?.data)
+        ? res.data
+        : [];
+      setStudentLeaves(arr);
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to load student leaves");
     } finally {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTeacherClassrooms } from "../Utility/attendanceApi";
-import { getCurriculumApi } from "../Utility/curriculumApi";
+import { getCurriculumApi, getSubjectsApi } from "../Utility/curriculumApi";
 
 export default function Curriculum() {
   const navigate = useNavigate();
@@ -9,6 +9,9 @@ export default function Curriculum() {
   const [error, setError] = useState("");
 
   const [classrooms, setClassrooms] = useState([]);
+  const [classOptions, setClassOptions] = useState([]); // [{ class_id, class_name }]
+  const [sectionOptions, setSectionOptions] = useState([]); // [{ classroom_id, section_name }]
+  const [sectionsByClass, setSectionsByClass] = useState({}); // { [class_id]: [{ classroom_id, section_name }] }
   const [selected, setSelected] = useState({ class_id: "", classroom_id: "" });
 
   const [subjects, setSubjects] = useState([]);
@@ -20,24 +23,29 @@ export default function Curriculum() {
         setLoading(true);
         const res = await getTeacherClassrooms();
         const raw = res?.resources?.data || [];
-        // Flatten with class_id and classroom_id
-        const flat = [];
+        // Build class list and sections-by-class map
+        const classes = [];
+        const byClass = {};
         raw.forEach((cls) => {
           const class_id = cls?.class_id ?? cls?.id;
           const class_name = cls?.class_name;
+          if (!classes.find((c) => String(c.class_id) === String(class_id))) {
+            classes.push({ class_id, class_name });
+          }
           (cls?.sections || []).forEach((sec) => {
-            flat.push({
-              class_id,
-              classroom_id: sec.classroom_id,
-              class_name,
-              section_name: sec.section_name,
-            });
+            if (!byClass[class_id]) byClass[class_id] = [];
+            byClass[class_id].push({ classroom_id: sec.classroom_id, section_name: sec.section_name, class_name });
           });
         });
         if (!mounted) return;
-        setClassrooms(flat);
-        if (flat.length && (!selected.class_id || !selected.classroom_id)) {
-          setSelected({ class_id: flat[0].class_id, classroom_id: flat[0].classroom_id });
+        setClassrooms(raw);
+        setClassOptions(classes);
+        setSectionsByClass(byClass);
+        // Initialize selection
+        if (classes.length && (!selected.class_id || !selected.classroom_id)) {
+          const initClass = classes[0].class_id;
+          const initSection = (byClass[initClass] || [])[0]?.classroom_id || "";
+          setSelected({ class_id: initClass, classroom_id: initSection });
         }
       } catch (e) {
         if (!mounted) return;
@@ -49,14 +57,35 @@ export default function Curriculum() {
     return () => { mounted = false; };
   }, []);
 
+  // Update section options when class changes
+  useEffect(() => {
+    const opts = sectionsByClass[selected.class_id] || [];
+    setSectionOptions(opts);
+    // Reset classroom when class changes
+    if (opts.length && !opts.find((o) => String(o.classroom_id) === String(selected.classroom_id))) {
+      setSelected((s) => ({ ...s, classroom_id: opts[0].classroom_id }));
+    }
+  }, [selected.class_id, sectionsByClass]);
+
   async function loadCurriculum() {
     if (!selected.class_id || !selected.classroom_id) return;
     try {
       setLoading(true);
       setError("");
-      const res = await getCurriculumApi({ class_id: selected.class_id, classroom_id: selected.classroom_id });
-      const list = res?.resources?.data || [];
-      setSubjects(list);
+      // Fetch subject list for classroom and curriculum overview, then merge so all subjects appear
+      const [subRes, curRes] = await Promise.all([
+        getSubjectsApi(selected.classroom_id),
+        getCurriculumApi({ class_id: selected.class_id, classroom_id: selected.classroom_id }),
+      ]);
+      const subjectList = Array.isArray(subRes?.resources?.data) ? subRes.resources.data : [];
+      const overview = Array.isArray(curRes?.resources?.data) ? curRes.resources.data : [];
+      const byId = {};
+      overview.forEach((s) => { if (s?.subject_id != null) byId[s.subject_id] = s; });
+      const merged = subjectList.map((s) => {
+        const ov = byId[s.subject_id];
+        return ov ? ov : { subject_id: s.subject_id, subject_name: s.subject_name, chapters: 0, progress_percentage: 0 };
+      });
+      setSubjects(merged);
     } catch (e) {
       setError(e?.response?.data?.message || e.message || "Failed to load curriculum");
       setSubjects([]);
@@ -84,18 +113,24 @@ export default function Curriculum() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <select
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[220px]"
-              value={selected.class_id && selected.classroom_id ? `${selected.class_id}|${selected.classroom_id}` : ""}
-              onChange={(e) => {
-                const [class_id, classroom_id] = e.target.value.split("|");
-                setSelected({ class_id, classroom_id });
-              }}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[180px]"
+              value={selected.class_id}
+              onChange={(e) => setSelected((s) => ({ class_id: e.target.value, classroom_id: "" }))}
             >
-              {!classrooms.length && <option value="">No classrooms assigned</option>}
-              {classrooms.map(c => (
-                <option key={`${c.class_id}|${c.classroom_id}`} value={`${c.class_id}|${c.classroom_id}`}>
-                  {c.class_name} • Sec {c.section_name}
-                </option>
+              {!classOptions.length && <option value="">No classes</option>}
+              {classOptions.map((c) => (
+                <option key={c.class_id} value={c.class_id}>{c.class_name}</option>
+              ))}
+            </select>
+            <select
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[160px]"
+              value={selected.classroom_id}
+              onChange={(e) => setSelected((s) => ({ ...s, classroom_id: e.target.value }))}
+              disabled={!sectionOptions.length}
+            >
+              {!sectionOptions.length && <option value="">No sections</option>}
+              {sectionOptions.map((s) => (
+                <option key={s.classroom_id} value={s.classroom_id}>Sec {s.section_name}</option>
               ))}
             </select>
             <button

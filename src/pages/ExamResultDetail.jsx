@@ -19,7 +19,7 @@ export default function ExamResultDetail() {
     if (!search) return rows;
     const q = search.toLowerCase();
     return rows.filter((r) =>
-      `${r.roll_no || ""} ${r.first_name || ""} ${r.last_name || ""}`.toLowerCase().includes(q)
+      `${r.roll_no || ""} ${r.student_name || ""}`.toLowerCase().includes(q)
     );
   }, [rows, search]);
 
@@ -32,6 +32,10 @@ export default function ExamResultDetail() {
       const first = list[0] || {};
       setMeta({
         subject_id: first.subject_id,
+        subject_name: first.subject_name,
+        exam_name: first.exam_name,
+        class_name: first.class_name,
+        section_name: first.section_name,
         total_marks: first.total_marks,
         pass_marks: first.pass_marks,
         exam_date: first.exam_date,
@@ -65,7 +69,7 @@ export default function ExamResultDetail() {
         <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{meta.exam_name} • {meta.subject_name}</h1>
-            <p className="text-xs text-gray-600">{meta.class_name} • Sec {meta.section_name} • Max {meta.max_marks ?? '-'}</p>
+            <p className="text-xs text-gray-600">{meta.class_name} • Sec {meta.section_name} • Max {meta.total_marks ?? '-'}</p>
           </div>
           <div className="flex gap-2">
             <Link to="/results" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm">Back to Results</Link>
@@ -115,13 +119,14 @@ export default function ExamResultDetail() {
                   </tr>
                 ) : (
                   filtered.map((s, idx) => {
-                    const percentage = pct(s.marks, meta.max_marks);
-                    const pass = percentage != null && percentage >= 35; 
+                    const percentage = pct(s.marks, meta.total_marks);
+                    // Prefer API's is_passed if provided, else fallback to pass_marks comparison
+                    const pass = s.marks == null ? null : (typeof s.is_passed === 'number' ? s.is_passed === 1 : (meta.pass_marks != null ? Number(s.marks) >= Number(meta.pass_marks) : (percentage != null ? percentage >= 35 : null)));
                     return (
                       <tr key={s.student_id || idx} className="hover:bg-gray-50">
                         <td className="px-3 py-2 border-b">{idx + 1}</td>
                         <td className="px-3 py-2 border-b">{s.roll_no}</td>
-                        <td className="px-3 py-2 border-b">{`${s.first_name || ""} ${s.last_name || ""}`}</td>
+                        <td className="px-3 py-2 border-b">{s.student_name || '-'}</td>
                         <td className="px-3 py-2 border-b">{s.marks ?? '-'}</td>
                         <td className="px-3 py-2 border-b">{percentage ?? '-'}</td>
                         <td className="px-3 py-2 border-b">

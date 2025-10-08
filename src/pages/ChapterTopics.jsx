@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { subjectDetailsApi, updateTopicProgressApi, getSubjectsApi } from "../Utility/curriculumApi";
 import toast from "react-hot-toast";
+import { getTeacherClassrooms } from "../Utility/attendanceApi";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -16,6 +17,9 @@ export default function ChapterTopics() {
   const module_name = query.get("module_name");
   const class_name = query.get("class_name");
   const section_name = query.get("section_name");
+
+  const [headerClassName, setHeaderClassName] = useState(class_name || "");
+  const [headerSectionName, setHeaderSectionName] = useState(section_name || "");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -63,6 +67,31 @@ export default function ChapterTopics() {
   }
 
   useEffect(() => { loadTopics(); }, [moduleId]);
+
+  // Fallback: if class_name/section_name not provided, derive from classroom map
+  useEffect(() => {
+    (async () => {
+      if (headerClassName && headerSectionName) return;
+      try {
+        if (!classroom_id) return;
+        const res = await getTeacherClassrooms();
+        const raw = Array.isArray(res?.resources?.data) ? res.resources.data : [];
+        for (const cls of raw) {
+          const cname = cls.class_name;
+          const sections = Array.isArray(cls.sections) ? cls.sections : [];
+          const found = sections.find((s) => String(s.classroom_id) === String(classroom_id));
+          if (found) {
+            if (!headerClassName) setHeaderClassName(cname || "");
+            if (!headerSectionName) setHeaderSectionName(found.section_name || "");
+            break;
+          }
+        }
+      } catch (_) {
+        // ignore
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classroom_id]);
 
   // Load teacher-assigned subjects for this classroom to gate updates
   useEffect(() => {
@@ -118,8 +147,8 @@ export default function ChapterTopics() {
           <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{module_name || 'Chapter'} Topics</h1>
             <p className="text-xs text-gray-600">Manage topic progress for this chapter</p>
-            {(class_name || section_name) && (
-              <p className="text-xs text-gray-500 mt-1">Class: <span className="font-semibold text-gray-700">{class_name || '-'}</span> • Section: <span className="font-semibold text-gray-700">{section_name || '-'}</span></p>
+            {(headerClassName || headerSectionName) && (
+              <p className="text-xs text-gray-500 mt-1">Class: <span className="font-semibold text-gray-700">{headerClassName || '-'}</span> • Section: <span className="font-semibold text-gray-700">{headerSectionName || '-'}</span></p>
             )}
           </div>
 

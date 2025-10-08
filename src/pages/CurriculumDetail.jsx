@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { subjectDetailsApi } from "../Utility/curriculumApi";
+import { getTeacherClassrooms } from "../Utility/attendanceApi";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -13,6 +14,8 @@ export default function CurriculumDetail() {
   const classroom_id = query.get("classroom_id");
   const class_name = query.get("class_name");
   const section_name = query.get("section_name");
+  const [headerClassName, setHeaderClassName] = useState(class_name || "");
+  const [headerSectionName, setHeaderSectionName] = useState(section_name || "");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,6 +26,7 @@ export default function CurriculumDetail() {
     if (!subjectId || !class_id || !classroom_id) return;
     (async () => {
       try {
+        setLoading(true);
         const res = await subjectDetailsApi({ subject_id: subjectId, class_id, classroom_id });
         // Dashboard uses an array directly at resources.data
         setRows(Array.isArray(res?.resources?.data) ? res.resources.data : []);
@@ -33,14 +37,39 @@ export default function CurriculumDetail() {
     })();
   }, [subjectId, class_id, classroom_id]);
 
+  // Fallback header info: derive class/section from classroom_id when not provided
+  useEffect(() => {
+    (async () => {
+      if (headerClassName && headerSectionName) return;
+      try {
+        if (!classroom_id) return;
+        const res = await getTeacherClassrooms();
+        const raw = Array.isArray(res?.resources?.data) ? res.resources.data : [];
+        for (const cls of raw) {
+          const cname = cls.class_name;
+          const sections = Array.isArray(cls.sections) ? cls.sections : [];
+          const found = sections.find((s) => String(s.classroom_id) === String(classroom_id));
+          if (found) {
+            if (!headerClassName) setHeaderClassName(cname || "");
+            if (!headerSectionName) setHeaderSectionName(found.section_name || "");
+            break;
+          }
+        }
+      } catch (_) {
+        // ignore
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classroom_id]);
+
   return (
     <>
     <div className="p-3 sm:p-4 md:p-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
           <p className="text-xs text-gray-600">Chapters and topics with progress</p>
-          {(class_name || section_name) && (
-            <p className="text-xs text-gray-500 mt-1">Class: <span className="font-semibold text-gray-700">{class_name || '-'}</span> • Section: <span className="font-semibold text-gray-700">{section_name || '-'}</span></p>
+          {(headerClassName || headerSectionName) && (
+            <p className="text-xs text-gray-500 mt-1">Class: <span className="font-semibold text-gray-700">{headerClassName || '-'}</span> • Section: <span className="font-semibold text-gray-700">{headerSectionName || '-'}</span></p>
           )}
         </div>
 
@@ -65,12 +94,11 @@ export default function CurriculumDetail() {
                     <tr key={i} className="animate-pulse">
                       <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
                       <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
-                      <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
                     </tr>
                   ))
                 ) : rows.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-3 py-6 text-center text-gray-500">No chapters found</td>
+                    <td colSpan={2} className="px-3 py-6 text-center text-gray-500">No chapters found</td>
                   </tr>
                 ) : (
                   rows.map((item, index) => (
@@ -78,7 +106,7 @@ export default function CurriculumDetail() {
                       key={item.module_id || index}
                       className="border-b cursor-pointer hover:bg-gray-50"
                       onClick={() =>
-                        navigate(`/curriculum/chapter/${item.module_id}?subject_id=${encodeURIComponent(subjectId)}&class_id=${encodeURIComponent(class_id)}&classroom_id=${encodeURIComponent(classroom_id)}&module_name=${encodeURIComponent(item.module_name || '')}&class_name=${encodeURIComponent(class_name || '')}&section_name=${encodeURIComponent(section_name || '')}`)
+                        navigate(`/curriculum/chapter/${item.module_id}?subject_id=${encodeURIComponent(subjectId)}&class_id=${encodeURIComponent(class_id)}&classroom_id=${encodeURIComponent(classroom_id)}&module_name=${encodeURIComponent(item.module_name || '')}&class_name=${encodeURIComponent(headerClassName || '')}&section_name=${encodeURIComponent(headerSectionName || '')}`)
                       }
                     >
                       <td className="px-3 py-2 font-medium">{item.module_name}</td>
