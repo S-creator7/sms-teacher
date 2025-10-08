@@ -54,7 +54,7 @@ function Section({ title, items, onNavigate, activePath }) {
               to={to}
               onClick={onNavigate}
               className={() =>
-                `mx-2 my-1 flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 select-none font-sans ` +
+                `mx-2 my-1 flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 select-none font-sans focus-visible:outline-none focus-visible:ring-0 focus-visible:outline-offset-0 ` +
                 (active
                   ? `bg-blue-600 text-white shadow-xl border-l-4 border-blue-400`
                   : `text-gray-300 hover:bg-blue-700/50 hover:text-white hover:border-l-4 hover:border-blue-500/50`)
@@ -113,7 +113,7 @@ export default function Sidebar({ isSidebarOpen, isMobile, toggleSidebar }) {
           <button
             onClick={toggleSidebar}
             aria-label="Close sidebar"
-            className="absolute right-3 top-3 p-2 rounded-lg hover:bg-blue-800/30 text-white transition-colors z-50"
+            className="absolute right-3 top-3 p-2 rounded-lg hover:bg-blue-800/30 text-white transition-colors z-50 focus-visible:outline-none focus-visible:ring-0 focus-visible:outline-offset-0"
           >
             <LuX className="h-5 w-5" />
           </button>

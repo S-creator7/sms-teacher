@@ -89,7 +89,7 @@ function AppContent() {
             minHeight: 'calc(100vh - 64px)'
           }}
         >
-          <div className="p-6">
+          <div className="p-0">
             <Routes>
               <Route
                 path="/"
