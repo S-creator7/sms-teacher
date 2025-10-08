@@ -49,7 +49,6 @@ export default function ChapterTopics() {
       const modules = Array.isArray(res?.resources?.data) ? res.resources.data : [];
       const mod = modules.find(m => String(m.module_id) === String(moduleId));
       const raw = Array.isArray(mod?.topics) ? mod.topics : [];
-      // Deduplicate by topic_id to avoid repeated rows
       const seen = new Set();
       const unique = [];
       for (const t of raw) {
@@ -68,7 +67,6 @@ export default function ChapterTopics() {
 
   useEffect(() => { loadTopics(); }, [moduleId]);
 
-  // Fallback: if class_name/section_name not provided, derive from classroom map
   useEffect(() => {
     (async () => {
       if (headerClassName && headerSectionName) return;
@@ -86,14 +84,10 @@ export default function ChapterTopics() {
             break;
           }
         }
-      } catch (_) {
-        // ignore
-      }
+      } catch (_) {}
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classroom_id]);
+  }, [classroom_id, headerClassName, headerSectionName]);
 
-  // Load teacher-assigned subjects for this classroom to gate updates
   useEffect(() => {
     (async () => {
       try {
@@ -125,10 +119,8 @@ export default function ChapterTopics() {
         classroom_id: Number(classroom_id),
       });
       toast.success("Topic status updated");
-      // Close modal if open
       setConfirmOpen(false);
       setPendingTopic(null);
-      // Refetch to ensure consistency; do not mutate locally to avoid duplication
       await loadTopics();
     } catch (e) {
       const msg = e?.response?.data?.message || e.message || "Failed to update topic status";
@@ -138,86 +130,97 @@ export default function ChapterTopics() {
     }
   }
 
-  
-
   return (
     <>
-      <div className="p-3 sm:p-4 md:p-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{module_name || 'Chapter'} Topics</h1>
-            <p className="text-xs text-gray-600">Manage topic progress for this chapter</p>
+      <div className="p-4 sm:p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h1 className="text-xl font-semibold text-gray-900 mb-1">{module_name || 'Chapter'} Topics</h1>
+            <p className="text-sm text-gray-600 mb-2">Manage topic progress for this chapter</p>
             {(headerClassName || headerSectionName) && (
-              <p className="text-xs text-gray-500 mt-1">Class: <span className="font-semibold text-gray-700">{headerClassName || '-'}</span> • Section: <span className="font-semibold text-gray-700">{headerSectionName || '-'}</span></p>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+                  Class: {headerClassName || '-'}
+                </span>
+                <span className="bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
+                  Section: {headerSectionName || '-'}
+                </span>
+              </div>
             )}
           </div>
 
-          <div className="p-4 sm:p-5">
+          <div className="p-4 sm:p-6">
             {!canUpdate && (
-              <div className="mb-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+              <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-700">
                 You are not assigned to this subject in the selected classroom. Status updates are disabled.
               </div>
             )}
             {error && (
-              <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="text-xs text-gray-500">Total Topics</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="text-sm text-gray-600">Total Topics</div>
                 <div className="text-2xl font-bold text-gray-900">{counts.total}</div>
               </div>
-              <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
-                <div className="text-xs text-green-700">Completed</div>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <div className="text-sm text-green-700">Completed</div>
                 <div className="text-2xl font-bold text-green-800">{counts.completed}</div>
               </div>
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                <div className="text-xs text-amber-700">Pending</div>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="text-sm text-amber-700">Pending</div>
                 <div className="text-2xl font-bold text-amber-800">{counts.pending}</div>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-gray-700">
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <table className="w-full">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-left px-3 py-2 border-b">Topic</th>
-                    <th className="text-left px-3 py-2 border-b">Description</th>
-                    <th className="text-left px-3 py-2 border-b">Status</th>
-                    <th className="text-left px-3 py-2 border-b">Action</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-700 text-sm">Topic</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-700 text-sm">Description</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-700 text-sm">Status</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-700 text-sm">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     [...Array(6)].map((_, i) => (
                       <tr key={i} className="animate-pulse">
-                        <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
-                        <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
-                        <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
-                        <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded" /></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded" /></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded" /></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded" /></td>
                       </tr>
                     ))
                   ) : topics.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-3 py-6 text-center text-gray-500">No topics found</td>
+                      <td colSpan={4} className="px-4 py-8 text-center">
+                        <div className="text-gray-500 text-sm">No topics found</div>
+                      </td>
                     </tr>
                   ) : (
                     topics.map((t, idx) => (
-                      <tr key={t.topic_id || idx} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 border-b">{t.topic_name}</td>
-                        <td className="px-3 py-2 border-b">{t.topic_description || t.description || '-'}</td>
-                        <td className="px-3 py-2 border-b">
-                          <span className="px-2 py-0.5 rounded text-xs font-semibold border bg-gray-100 text-gray-700 border-gray-200">
+                      <tr key={t.topic_id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-4 py-3 text-sm text-gray-700">{t.topic_name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{t.topic_description || t.description || '-'}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            String(t.progress_status).toLowerCase() === 'completed' 
+                              ? 'bg-green-100 text-green-800 border border-green-200' 
+                              : 'bg-gray-100 text-gray-700 border border-gray-200'
+                          }`}>
                             {t.progress_status || 'pending'}
                           </span>
                         </td>
-                        <td className="px-3 py-2 border-b">
+                        <td className="px-4 py-3">
                           <button
-                            className="px-2 py-1 rounded text-xs bg-green-600 hover:bg-green-700 text-white disabled:opacity-60"
+                            className="bg-white border border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={!canUpdate || String(t.progress_status).toLowerCase() === 'completed' || savingId === t.topic_id}
                             onClick={() => openConfirm(t)}
                           >
-                            Mark completed
+                            Mark Completed
                           </button>
                         </td>
                       </tr>
@@ -232,29 +235,29 @@ export default function ChapterTopics() {
 
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b bg-gradient-to-r from-blue-50 to-white">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b bg-gray-50">
               <h3 className="text-base font-semibold text-gray-900">Confirm Completion</h3>
-              <p className="text-xs text-gray-600 mt-1">This will mark the topic as <span className="font-semibold">Completed</span> for this class/section.</p>
+              <p className="text-sm text-gray-600 mt-1">This will mark the topic as completed for this class/section.</p>
             </div>
             <div className="px-5 py-4 space-y-2">
               <div className="text-sm text-gray-800">Topic: <span className="font-semibold">{pendingTopic?.topic_name}</span></div>
-              <div className="text-xs text-gray-600">Class: <span className="font-medium">{class_name || '-'}</span> • Section: <span className="font-medium">{section_name || '-'}</span></div>
+              <div className="text-sm text-gray-600">Class: <span className="font-medium">{class_name || '-'}</span> • Section: <span className="font-medium">{section_name || '-'}</span></div>
             </div>
             <div className="px-5 py-3 bg-gray-50 border-t flex gap-2 justify-end">
               <button
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm"
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium"
                 onClick={() => { setConfirmOpen(false); setPendingTopic(null); }}
                 disabled={!!savingId}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm disabled:opacity-60"
+                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-60"
                 onClick={() => pendingTopic && markCompleted(pendingTopic)}
                 disabled={!!savingId}
               >
-                {savingId ? 'Saving...' : 'Yes, mark completed'}
+                {savingId ? 'Saving...' : 'Mark Completed'}
               </button>
             </div>
           </div>

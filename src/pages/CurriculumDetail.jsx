@@ -16,10 +16,9 @@ export default function CurriculumDetail() {
   const section_name = query.get("section_name");
   const [headerClassName, setHeaderClassName] = useState(class_name || "");
   const [headerSectionName, setHeaderSectionName] = useState(section_name || "");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [rows, setRows] = useState([]); // array of modules/chapters
+  const [rows, setRows] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +27,6 @@ export default function CurriculumDetail() {
       try {
         setLoading(true);
         const res = await subjectDetailsApi({ subject_id: subjectId, class_id, classroom_id });
-        // Dashboard uses an array directly at resources.data
         setRows(Array.isArray(res?.resources?.data) ? res.resources.data : []);
       } catch (e) {
         setError(e?.response?.data?.message || e.message || "Failed to load subject details");
@@ -37,7 +35,6 @@ export default function CurriculumDetail() {
     })();
   }, [subjectId, class_id, classroom_id]);
 
-  // Fallback header info: derive class/section from classroom_id when not provided
   useEffect(() => {
     (async () => {
       if (headerClassName && headerSectionName) return;
@@ -55,79 +52,106 @@ export default function CurriculumDetail() {
             break;
           }
         }
-      } catch (_) {
-        // ignore
-      }
+      } catch (_) {}
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classroom_id]);
+  }, [classroom_id, headerClassName, headerSectionName]);
 
   return (
-    <>
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
-          <p className="text-xs text-gray-600">Chapters and topics with progress</p>
+    <div className="p-4 sm:p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-gray-900 mb-1">Chapter Progress</h1>
+          <p className="text-sm text-gray-600 mb-2">Click on any chapter to view and manage topics</p>
           {(headerClassName || headerSectionName) && (
-            <p className="text-xs text-gray-500 mt-1">Class: <span className="font-semibold text-gray-700">{headerClassName || '-'}</span> • Section: <span className="font-semibold text-gray-700">{headerSectionName || '-'}</span></p>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+                Class: {headerClassName || '-'}
+              </span>
+              <span className="bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
+                Section: {headerSectionName || '-'}
+              </span>
+            </div>
           )}
         </div>
 
-        <div className="p-4 sm:p-5">
+        <div className="p-4 sm:p-6">
           {error && (
-            <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
+            <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {error}
+            </div>
           )}
 
-          {/* Clicking a chapter opens topics page which shows its own cards */}
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-700">
-                <tr>
-                  <th className="text-left px-3 py-2 border-b">Chapter</th>
-                  <th className="text-left px-3 py-2 border-b">Completion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  [...Array(6)].map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
-                      <td className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded" /></td>
-                    </tr>
-                  ))
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={2} className="px-3 py-6 text-center text-gray-500">No chapters found</td>
-                  </tr>
-                ) : (
-                  rows.map((item, index) => (
-                    <tr
-                      key={item.module_id || index}
-                      className="border-b cursor-pointer hover:bg-gray-50"
-                      onClick={() =>
-                        navigate(`/curriculum/chapter/${item.module_id}?subject_id=${encodeURIComponent(subjectId)}&class_id=${encodeURIComponent(class_id)}&classroom_id=${encodeURIComponent(classroom_id)}&module_name=${encodeURIComponent(item.module_name || '')}&class_name=${encodeURIComponent(headerClassName || '')}&section_name=${encodeURIComponent(headerSectionName || '')}`)
-                      }
-                    >
-                      <td className="px-3 py-2 font-medium">{item.module_name}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2 min-w-[160px]">
-                          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden max-w-[180px]">
-                            <div className="h-3 bg-green-500 rounded-full" style={{ width: `${Math.max(0, Math.min(100, Number(item.progress_percentage) || 0))}%` }} />
-                          </div>
-                          <span className="text-xs text-gray-700">{Math.max(0, Math.min(100, Number(item.progress_percentage) || 0))}%</span>
+          <div className="grid gap-4">
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse bg-gray-100 rounded-lg p-5">
+                  <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))
+            ) : rows.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-500 text-lg font-medium">No chapters found</div>
+                <div className="text-gray-400 text-sm mt-2">There are no chapters available for this subject</div>
+              </div>
+            ) : (
+              rows.map((item, index) => (
+                <div
+                  key={item.module_id || index}
+                  className="bg-white border border-gray-200 rounded-lg p-2 hover:border-green-400 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                  onClick={() =>
+                    navigate(`/curriculum/chapter/${item.module_id}?subject_id=${encodeURIComponent(subjectId)}&class_id=${encodeURIComponent(class_id)}&classroom_id=${encodeURIComponent(classroom_id)}&module_name=${encodeURIComponent(item.module_name || '')}&class_name=${encodeURIComponent(headerClassName || '')}&section_name=${encodeURIComponent(headerSectionName || '')}`)
+                  }
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-sm font-semibold group-hover:bg-green-200 transition-colors">
+                          {index + 1}
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                          {item.module_name}
+                        </h3>
+                        <div className="ml-2 flex items-center gap-1">
+                          <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      {item.module_description && (
+                        <p className="text-sm text-gray-600 ml-11">{item.module_description}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right min-w-[100px]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-100 bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="h-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500" 
+                              style={{ width: `${Math.max(0, Math.min(100, Number(item.progress_percentage) || 0))}%` }} 
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 min-w-[40px]">
+                            {Math.max(0, Math.min(100, Number(item.progress_percentage) || 0))}%
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500">Completion</div>
+                      </div>
+                      
+                      <div className="w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
     </div>
-    {/* No modal on this page */}
-  </>
   );
 }
