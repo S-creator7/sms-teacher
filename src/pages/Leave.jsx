@@ -16,8 +16,6 @@ const leaveTypes = [
 
 export default function Leave() {
   const [tab, setTab] = useState("request");
-
-  // New leave request form state
   const [form, setForm] = useState({
     leave_type: "sick",
     start_date: "",
@@ -25,12 +23,8 @@ export default function Leave() {
     reason: "",
   });
   const [submitting, setSubmitting] = useState(false);
-
-  // My leave history
   const [leaveHistory, setLeaveHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-
-  // Student leaves (for approval)
   const [studentLeaves, setStudentLeaves] = useState([]);
   const [loadingStudentLeaves, setLoadingStudentLeaves] = useState(false);
   const [actioningId, setActioningId] = useState(null);
@@ -41,7 +35,6 @@ export default function Leave() {
   );
 
   useEffect(() => {
-    // preload history and student leaves
     refreshHistory();
     refreshStudentLeaves();
   }, []);
@@ -116,116 +109,109 @@ export default function Leave() {
   }
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Leave Management</h1>
-      </div>
-      <div className="flex gap-2 bg-white p-1 rounded-xl shadow border border-gray-200 w-full sm:w-auto">
-        {[
-          { key: "request", label: "New Leave" },
-          { key: "history", label: "My Leave History" },
-          { key: "students", label: "Student Leave Requests" },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              tab === t.key
-                ? "bg-gray-600 text-white shadow"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        <div className="flex gap-2 bg-white p-1 rounded-xl shadow border border-gray-200 w-full sm:w-auto">
+          {[
+            { key: "request", label: "New Leave" },
+            { key: "history", label: "My Leave History" },
+            { key: "students", label: "Student Leave Requests" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition flex-1 sm:flex-none ${
+                tab === t.key
+                  ? "bg-gray-600 text-white shadow"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === "request" && (
-  <div className="w-full bg-white rounded-xl shadow-md border border-gray-200 p-8">
-    <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={submitLeave}>
-      
-      {/* Leave Type */}
-      <div className="col-span-1">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Leave Type</label>
-        <select
-          className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          value={form.leave_type}
-          onChange={(e) => setForm((f) => ({ ...f, leave_type: e.target.value }))}
-        >
-          {leaveTypes.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="w-full bg-white rounded-xl shadow-md border border-gray-200 p-6">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={submitLeave}>
+            <div className="col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Leave Type</label>
+              <select
+                className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={form.leave_type}
+                onChange={(e) => setForm((f) => ({ ...f, leave_type: e.target.value }))}
+              >
+                {leaveTypes.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      {/* Start Date */}
-      <div className="col-span-1">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-        <input
-          type="date"
-          className="w-full rounded-md border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          value={form.start_date}
-          onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))}
-        />
-      </div>
+            <div className="col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                className="w-full rounded-md border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={form.start_date}
+                onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))}
+              />
+            </div>
 
-      {/* End Date */}
-      <div className="col-span-1">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
-        <input
-          type="date"
-          className="w-full rounded-md border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          value={form.end_date}
-          onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
-        />
-      </div>
+            <div className="col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                className="w-full rounded-md border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={form.end_date}
+                onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
+              />
+            </div>
 
-      {/* Reason */}
-      <div className="col-span-1 md:col-span-2">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Reason</label>
-        <textarea
-          rows={4}
-          className="w-full rounded-md border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          value={form.reason}
-          onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-        />
-      </div>
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Reason</label>
+              <textarea
+                rows={4}
+                className="w-full rounded-md border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={form.reason}
+                onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+              />
+            </div>
 
-      {/* Buttons */}
-      <div className="col-span-1 md:col-span-2 flex justify-end gap-4 mt-4">
-        <button
-          type="button"
-          onClick={() => setForm({ leave_type: "sick", start_date: "", end_date: "", reason: "" })}
-          className="px-5 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
-        >
-          Reset
-        </button>
-        <button
-          type="submit"
-          disabled={!hasForm || submitting}
-          className={`px-5 py-2 rounded-md text-white font-medium transition ${
-            !hasForm || submitting
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {submitting ? "Submitting..." : "Submit"}
-        </button>
-      </div>
-    </form>
-  </div>
-)}
-
+            <div className="col-span-1 md:col-span-2 flex justify-end gap-4 mt-4">
+              <button
+                type="button"
+                onClick={() => setForm({ leave_type: "sick", start_date: "", end_date: "", reason: "" })}
+                className="px-5 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+              >
+                Reset
+              </button>
+              <button
+                type="submit"
+                disabled={!hasForm || submitting}
+                className={`px-5 py-2 rounded-md text-white font-medium transition ${
+                  !hasForm || submitting
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {submitting ? "Submitting..." : "Submit"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {tab === "history" && (
-        <div className="bg-white rounded-xl shadow border border-gray-200 p-0">
-          <div className="flex items-center justify-between p-4 border-b">
+        <div className="bg-white rounded-xl shadow border border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b gap-4">
             <div className="text-sm text-gray-600">Your past leave applications</div>
             <button
               onClick={refreshHistory}
-              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50"
+              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 w-full sm:w-auto"
             >
               Refresh
             </button>
@@ -287,11 +273,11 @@ export default function Leave() {
 
       {tab === "students" && (
         <div className="bg-white rounded-xl shadow border border-gray-200">
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b gap-4">
             <div className="text-sm text-gray-600">Student leave requests for your classes</div>
             <button
               onClick={refreshStudentLeaves}
-              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50"
+              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 w-full sm:w-auto"
             >
               Refresh
             </button>
@@ -345,7 +331,7 @@ export default function Leave() {
                         </span>
                       </td>
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             disabled={actioningId === s.student_leave_id || s.leave_status !== "Pending"}
                             onClick={() => handleStudentLeaveAction(s.student_leave_id, "Approved")}

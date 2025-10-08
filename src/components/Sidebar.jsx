@@ -134,11 +134,8 @@ export default function Sidebar({ isSidebarOpen, isMobile, toggleSidebar }) {
         <div className="flex-shrink-0 p-4 text-xs border-t border-gray-700">
           <div className="rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-4 border border-gray-700 shadow-lg">
             <div className="font-bold text-white text-sm font-sans mb-1">Aaplishala</div>
-            <div className="text-blue-200 font-sans mb-2">
+            <div className="text-blue-200 text-sm font-sans mb-2">
               &copy; {new Date().getFullYear()} All rights reserved.
-            </div>
-            <div className="text-gray-400 text-xs">
-              Version 1.0.0
             </div>
           </div>
         </div>

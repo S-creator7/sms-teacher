@@ -31,27 +31,20 @@ function StatusBadge({ status }) {
 
 export default function Posh() {
   const [tab, setTab] = useState("file");
-
-  // File complaint form
   const [form, setForm] = useState({ title: "", subject: "", description: "", type: "posh", attachment: null });
   const canSubmit = useMemo(
     () => form.title.trim() && form.subject.trim() && form.description.trim() && form.type,
     [form]
   );
   const [submitting, setSubmitting] = useState(false);
-
-  // Complaints list
   const [complaints, setComplaints] = useState([]);
   const [loadingComplaints, setLoadingComplaints] = useState(false);
   const [filter, setFilter] = useState({ type: "", complaint_status: "" });
-
-  // Committee members
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
+  const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
   useEffect(() => {
-    // Preload complaints and committee members
     loadComplaints();
     loadMembers();
   }, []);
@@ -67,7 +60,6 @@ export default function Posh() {
       fd.append("description", form.description);
       fd.append("type", form.type);
       if (form.attachment) {
-        // include filename to help parser; Fastify multipart will yield attachment as an array with one element
         fd.append("attachment", form.attachment, form.attachment.name);
       }
       await createComplaint(fd);
@@ -78,10 +70,6 @@ export default function Posh() {
     } catch (e) {
       const msg = e?.response?.data?.message || e?.message || "Failed to submit complaint";
       toast.error(msg);
-      console.error("Complaint submit failed:", {
-        status: e?.response?.status,
-        data: e?.response?.data,
-      });
     } finally {
       setSubmitting(false);
     }
@@ -107,7 +95,6 @@ export default function Posh() {
     try {
       setLoadingMembers(true);
       const res = await getCommitteeMembers();
-      // Endpoint schema returns data array directly according to backend schema
       const list = res?.data ?? res?.resources?.data ?? [];
       setMembers(Array.isArray(list) ? list : []);
     } catch (e) {
@@ -118,36 +105,33 @@ export default function Posh() {
   }
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-800">POSH & Safety</h1>
+        <div className="flex gap-2 bg-white p-1 rounded-xl shadow border border-gray-200 w-full sm:w-auto">
+          {[
+            { key: "file", label: "File Complaint" },
+            { key: "emergency", label: "Emergency Help" },
+            { key: "complaints", label: "My Complaints" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition flex-1 sm:flex-none ${
+                tab === t.key ? "bg-black text-white shadow" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 bg-white p-1 rounded-xl shadow border border-gray-200 w-full sm:w-auto">
-        {[
-          { key: "file", label: "File Complaint" },
-          { key: "emergency", label: "Emergency Help" },
-          { key: "complaints", label: "My Complaints" },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              tab === t.key ? "bg-black text-white shadow" : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* File Complaint (first tab) */}
       {tab === "file" && (
-        <div className="w-full bg-white rounded-xl shadow-md border border-gray-200 p-8">
+        <div className="w-full bg-white rounded-xl shadow-md border border-gray-200 p-6">
           <div className="mb-6">
             <div className="text-lg font-semibold text-gray-900">Submit a confidential complaint</div>
-            <div className="text-sm text-gray-500">Provide clear details. Your report will be handled by the school’s internal committee.</div>
+            <div className="text-sm text-gray-500">Provide clear details. Your report will be handled by the school's internal committee.</div>
           </div>
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={onSubmitComplaint}>
             <div className="col-span-1">
@@ -159,7 +143,6 @@ export default function Posh() {
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               />
-              <p className="mt-1 text-xs text-gray-500">Keep it concise and descriptive.</p>
             </div>
             <div className="col-span-1">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Subject <span className="text-red-500">*</span></label>
@@ -170,7 +153,6 @@ export default function Posh() {
                 value={form.subject}
                 onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
               />
-              <p className="mt-1 text-xs text-gray-500">Example: Staff room, corridor, during class, etc.</p>
             </div>
             <div className="col-span-1">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
@@ -183,7 +165,6 @@ export default function Posh() {
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-500">Choose the most relevant category.</p>
             </div>
             <div className="col-span-1">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Attachment (optional)</label>
@@ -194,7 +175,7 @@ export default function Posh() {
                   const file = e.target.files?.[0] || null;
                   if (file && file.size > MAX_ATTACHMENT_BYTES) {
                     toast.error(`Attachment too large. Max 5 MB allowed.`);
-                    e.target.value = ""; // reset input
+                    e.target.value = "";
                     setForm((f) => ({ ...f, attachment: null }));
                     return;
                   }
@@ -205,7 +186,6 @@ export default function Posh() {
               {form.attachment && (
                 <div className="mt-1 text-xs text-gray-600">Selected: <span className="font-medium">{form.attachment.name}</span></div>
               )}
-              <p className="mt-1 text-xs text-gray-500">Attach supporting files if available (images, PDF, DOC). Max size 5 MB.</p>
             </div>
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Description <span className="text-red-500">*</span></label>
@@ -216,10 +196,6 @@ export default function Posh() {
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />
-              <div className="mt-1 flex justify-between text-xs text-gray-500">
-                <span>Share factual details. Avoid sensitive personal info unless necessary.</span>
-                <span className="italic">Confidential</span>
-              </div>
             </div>
             <div className="col-span-1 md:col-span-2 flex justify-end gap-4 mt-4">
               <button
@@ -239,14 +215,10 @@ export default function Posh() {
                 {submitting ? "Submitting..." : "Submit Complaint"}
               </button>
             </div>
-            <div className="col-span-1 md:col-span-2 mt-4 text-xs text-gray-500">
-              By submitting, you agree that the Internal Committee may contact you for further details.
-            </div>
           </form>
         </div>
       )}
 
-      {/* Emergency Help (second tab, includes committee members) */}
       {tab === "emergency" && (
         <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -266,9 +238,7 @@ export default function Posh() {
               </div>
             ))}
           </div>
-          <div className="mt-6 text-xs text-gray-500">Note: Emergency numbers may vary by region. Please verify with your school administration.</div>
 
-          {/* Committee members inside emergency tab */}
           <div className="mt-8">
             <div className="text-sm text-gray-700 font-semibold mb-3">School Internal Committee Members</div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -286,19 +256,18 @@ export default function Posh() {
                   </div>
                 ))
               ) : (
-                <div className="col-span-1 md:col-span-2 lg:grid-cols-3 text-center text-gray-500 py-10">No committee members found</div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center text-gray-500 py-10">No committee members found</div>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Complaints List */}
       {tab === "complaints" && (
         <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b pb-4">
             <div className="text-sm text-gray-600">Your complaints</div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <select
                 className="rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-black focus:ring-1 focus:ring-black"
                 value={filter.type}
@@ -357,31 +326,6 @@ export default function Posh() {
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Committee Members */}
-      {tab === "committee" && (
-        <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
-          <div className="text-sm text-gray-600 mb-4">School Internal Committee Members</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {loadingMembers ? (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center text-gray-500 py-10">Loading...</div>
-            ) : members?.length ? (
-              members.map((m) => (
-                <div key={m.member_id} className="rounded-xl border border-gray-200 p-5 shadow-sm bg-white">
-                  <div className="text-lg font-semibold text-gray-900">{m.name}</div>
-                  <div className="text-sm text-gray-500">{m.designation} • {m.member_type}</div>
-                  <div className="mt-2 text-sm">
-                    <div className="text-gray-600">Email: <a className="text-blue-600 hover:underline" href={`mailto:${m.email}`}>{m.email}</a></div>
-                    <div className="text-gray-600">Phone: <a className="text-blue-600 hover:underline" href={`tel:${m.phone_number}`}>{m.phone_number}</a></div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center text-gray-500 py-10">No committee members found</div>
-            )}
           </div>
         </div>
       )}
