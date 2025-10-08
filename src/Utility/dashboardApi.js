@@ -13,7 +13,6 @@ export async function getTeacherProfile() {
 }
 
 export async function getTodayTimetable(dayLabel) {
-  // dayLabel: 'Monday' | 'Tuesday' ... as required by backend schema
   const res = await axios.get(`${API_ENDPOINT}/v1/teacher/timetable`, {
     headers: getAuthHeaders(),
     params: { day: dayLabel },

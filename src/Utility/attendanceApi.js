@@ -7,7 +7,6 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// List of classrooms assigned to the teacher
 export async function getTeacherClassrooms() {
   const res = await axios.get(`${API_ENDPOINT}/v1/teacher/classrooms`, {
     headers: getAuthHeaders(),
@@ -15,7 +14,6 @@ export async function getTeacherClassrooms() {
   return res.data;
 }
 
-// Students attendance for a given classroom and date (YYYY-MM-DD)
 export async function getAttendanceByClassroom(classroom_id, date) {
   const res = await axios.get(`${API_ENDPOINT}/v1/teacher/attendance/${classroom_id}`, {
     headers: getAuthHeaders(),
