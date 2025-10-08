@@ -7,63 +7,75 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// ADMIN: GET /v1/school-admin/exam/list - list all exams (admin scope)
 export async function getAdminExamList(params = {}) {
   const res = await axios.get(`${API_ENDPOINT}/v1/school-admin/exam/list`, {
     headers: getAuthHeaders(),
     params,
   });
-  return res.data; // { status, code, message, resources: { data: { exams: [], pagination: {} } } }
+  return res.data;
 }
 
-// ADMIN: GET /v1/school-admin/report/report-card/list - list report cards
-export async function getReportCardList(params = {}) {
-  const res = await axios.get(`${API_ENDPOINT}/v1/school-admin/report/report-card/list`, {
+
+export async function getAdminExamScheduleList(params = {}) {
+  const res = await axios.get(`${API_ENDPOINT}/v1/school-admin/exam/schedule/list`, {
     headers: getAuthHeaders(),
     params,
   });
-  return res.data; // { status, code, message, resources: { data: [], pagination: {} } }
+  return res.data;
 }
 
-// GET /v1/teacher/exam - list exam schedules assigned to teacher
+export async function createExamWithSchedule(body) {
+  const res = await axios.post(`${API_ENDPOINT}/v1/school-admin/exam/create-with-schedule`, body, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+}
+
+export async function createExamSchedules(exam_id, schedules) {
+  const res = await axios.post(`${API_ENDPOINT}/v1/school-admin/exam/${exam_id}/schedules`, schedules, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+}
+
+export async function getAdminResultsByScheduler(scheduler_id) {
+  const res = await axios.get(`${API_ENDPOINT}/v1/school-admin/exam/${scheduler_id}/results`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+}
+
 export async function getTeacherExams(params = {}) {
   const res = await axios.get(`${API_ENDPOINT}/v1/teacher/exam`, {
     headers: getAuthHeaders(),
     params,
   });
-  return res.data; // { status, code, message, resources: { data: { exams: [], pagination: {} } } }
+  return res.data;
 }
 
-// GET /v1/teacher/exam-results - list result summaries across schedules
 export async function getExamResultsList(params = {}) {
   const res = await axios.get(`${API_ENDPOINT}/v1/teacher/exam-results`, {
     headers: getAuthHeaders(),
     params,
   });
-  return res.data; // { status, code, message, resources: { data: [], pagination: {} } }
-}
-
-// GET /v1/teacher/exam-results/{scheduler_id} - detailed results for a schedule
-export async function getSchedulerResults(scheduler_id, params = {}) {
-  const res = await axios.get(
-    `${API_ENDPOINT}/v1/teacher/exam-results/${scheduler_id}`,
-    { headers: getAuthHeaders(), params }
-  );
-  return res.data; // { status, code, message, resources: { data: [] } }
-}
-
-// POST /v1/teacher/exam/{scheduler_id}/results - create a single student's result
-// body: { student_id, marks_obtained, remarks? }
-export async function submitSingleResult(scheduler_id, body) {
-  const res = await axios.post(
-    `${API_ENDPOINT}/v1/teacher/exam/${scheduler_id}/results`,
-    body,
-    { headers: getAuthHeaders() }
-  );
   return res.data;
 }
 
-// Helper to submit multiple results sequentially
+export async function getSchedulerResults(scheduler_id, params = {}) {
+  const res = await axios.get(`${API_ENDPOINT}/v1/teacher/exam-results/${scheduler_id}`, {
+    headers: getAuthHeaders(),
+    params,
+  });
+  return res.data;
+}
+
+export async function submitSingleResult(scheduler_id, body) {
+  const res = await axios.post(`${API_ENDPOINT}/v1/teacher/exam/${scheduler_id}/results`, body, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+}
+
 export async function submitBatchResults(scheduler_id, results = []) {
   const out = [];
   for (const r of results) {
@@ -72,7 +84,6 @@ export async function submitBatchResults(scheduler_id, results = []) {
       marks_obtained: r.marks_obtained,
       ...(r.remarks ? { remarks: r.remarks } : {}),
     };
-    // eslint-disable-next-line no-await-in-loop
     const res = await submitSingleResult(scheduler_id, payload);
     out.push(res);
   }

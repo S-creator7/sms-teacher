@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getExamResultsList, getTeacherExams, getAdminExamList } from "../Utility/examApi";
+import { getExamResultsList, getTeacherExams } from "../Utility/examApi";
 
 export default function ExamResults() {
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function ExamResults() {
     if (!search) return items;
     const q = search.toLowerCase();
     return items.filter((r) =>
-      `${r.exam_name || ""} ${r.subject_name || ""} ${r.class_name || ""} ${r.section_name || ""}`
+      `${r.student_name || ""} ${r.roll_number || ""}`
         .toLowerCase()
         .includes(q)
     );
@@ -76,61 +76,72 @@ export default function ExamResults() {
       setLoading(false);
     }
   }
-
   useEffect(() => { load(1); setPage(1); }, [schedulerId, limit]);
 
   useEffect(() => {
     (async () => {
       try {
-        const ex = await getTeacherExams({ page: 1, limit: 200 });
-        const list = Array.isArray(ex?.resources?.data?.exams) ? ex.resources.data.exams : [];
-        const initial = list.map((e) => ({
-          value: e.scheduler_id,
-          label: `${e.exam_name || 'Exam'} • ${e.subject_name || '-'} • ${e.class_name || '-'}-${e.section_name || '-'}`,
-          meta: {
-            scheduler_id: e.scheduler_id,
-            classroom_id: e.classroom_id,
-            class_id: e.class_id,
-            subject_id: e.subject_id,
-            exam_id: e.exam_id,
-          },
-        }));
-
-        // Try to enrich from admin list if some fields are missing
-        let enriched = initial;
-        try {
-          const admin = await getAdminExamList({ page: 1, limit: 500 });
-          const adminList = Array.isArray(admin?.resources?.data?.exams)
-            ? admin.resources.data.exams
-            : Array.isArray(admin?.resources?.data) ? admin.resources.data : [];
-          const byScheduler = new Map();
-          for (const a of adminList) {
-            const sid = a.scheduler_id ?? a.schedule_id;
-            if (sid != null) byScheduler.set(String(sid), a);
+        // Step 1: collect unique scheduler_ids that actually have results (paginate, limit<=100)
+        const schedSet = new Set();
+        const schedMeta = new Map(); // sid -> { exam_date }
+        const resLimit = 100;
+        let rPage = 1;
+        let rTotalPages = 1;
+        do {
+          const r = await getExamResultsList({ page: rPage, limit: resLimit });
+          const results = Array.isArray(r?.resources?.data) ? r.resources.data : [];
+          for (const row of results) {
+            if (row?.scheduler_id != null) {
+              schedSet.add(row.scheduler_id);
+              if (!schedMeta.has(row.scheduler_id)) schedMeta.set(row.scheduler_id, { exam_date: row.exam_date });
+            }
           }
-          enriched = initial.map(o => {
-            const a = byScheduler.get(String(o.value));
-            if (!a) return o;
+          const pg = r?.resources?.pagination;
+          rTotalPages = Math.max(1, Number(pg?.total_pages || 1));
+          rPage += 1;
+        } while (rPage <= rTotalPages && rPage <= 5); // cap to 5 pages for safety
+
+        // Step 2: fetch teacher past exams for rich labels (paginate, limit<=100)
+        const examBySid = new Map();
+        const exLimit = 100;
+        let ePage = 1;
+        let eTotalPages = 1;
+        do {
+          const ex = await getTeacherExams({ filter: 'past', page: ePage, limit: exLimit });
+          const exams = Array.isArray(ex?.resources?.data?.exams) ? ex.resources.data.exams : [];
+          for (const e of exams) {
+            if (e?.scheduler_id != null) examBySid.set(e.scheduler_id, e);
+          }
+          const pg = ex?.resources?.data?.pagination;
+          eTotalPages = Math.max(1, Number(pg?.total_pages || 1));
+          ePage += 1;
+        } while (ePage <= eTotalPages && ePage <= 5);
+
+        // Step 3: build options, preferring exam labels when available; otherwise fallback to minimal label with date
+        const options = Array.from(schedSet).map((sid) => {
+          const e = examBySid.get(sid);
+          if (e) {
             return {
-              ...o,
+              value: sid,
+              label: `${e.exam_name || 'Exam'} • ${e.subject_name || '-'} • ${e.class_name || '-'}-${e.section_name || '-'}`,
               meta: {
-                ...o.meta,
-                scheduler_id: o.meta.scheduler_id,
-                classroom_id: o.meta.classroom_id ?? a.classroom_id ?? a.section_id ?? a.classroomId,
-                class_id: o.meta.class_id ?? a.class_id ?? a.classId,
-                subject_id: o.meta.subject_id ?? a.subject_id ?? a.subjectId,
-                exam_id: o.meta.exam_id ?? a.exam_id ?? a.examId,
+                scheduler_id: sid,
+                classroom_id: e.classroom_id,
+                class_id: e.class_id,
+                subject_id: e.subject_id,
+                exam_id: e.exam_id,
               }
             };
-          });
-        } catch (_) {
-          // ignore admin enrich errors (permissions or shape)
-        }
-        setExamOptions(enriched);
-      } catch (_) { /* ignore */ }
+          }
+          const meta = schedMeta.get(sid) || {};
+          const label = `Exam • ${meta.exam_date || '—'}`;
+          return { value: sid, label, meta: { scheduler_id: sid } };
+        });
+
+        setExamOptions(options);
+      } catch (error) { console.log(error) }
     })();
   }, []);
-
   return (
     <div className="p-3 sm:p-4 md:p-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -175,7 +186,7 @@ export default function ExamResults() {
                 const query = qp.toString();
                 const url = base
                   ? `${base.replace(/\/$/, '')}/results?${query}`
-                  : `/results/${schedulerId}`; // fallback to internal route if env not set
+                  : `/results/${schedulerId}`; 
                 window.open(url, "_blank");
               }}
             >

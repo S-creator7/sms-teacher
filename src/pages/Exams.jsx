@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getTeacherExams } from "../Utility/examApi";
-import { getTeacherClassrooms } from "../Utility/attendanceApi";
+import { getTeacherClassrooms } from "../Utility/dashboardApi";
 
 function formatDate(dt) {
   if (!dt) return "-";
   const d = new Date(dt);
-  if (isNaN(d)) return String(dt);
-  return d.toLocaleDateString();
+  return isNaN(d) ? String(dt) : d.toLocaleDateString();
 }
 
 export default function Exams() {
@@ -16,37 +15,24 @@ export default function Exams() {
   const [items, setItems] = useState([]);
 
   const [search, setSearch] = useState("");
-  const [classOptions, setClassOptions] = useState([]); // {classroom_id, label}
-  const [sectionOptions, setSectionOptions] = useState([]); // derived from class selection
-  const [selectedClassroom, setSelectedClassroom] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
-  const [range, setRange] = useState("all"); // all | upcoming | past
+  const [classOptions, setClassOptions] = useState([]); 
+  const [sectionOptions, setSectionOptions] = useState([]); 
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedClassroom, setSelectedClassroom] = useState(""); 
+  const [range, setRange] = useState("upcoming"); 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0, limit });
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    const today = new Date(); today.setHours(0,0,0,0);
     return items.filter((e) => {
-      // text search
       const matchesText = `${e.exam_name || ""} ${e.subject_name || ""} ${e.class_name || ""} ${e.section_name || ""}`.toLowerCase().includes(q);
       if (!matchesText) return false;
-      // class/section filters
       if (selectedClassroom && String(e.classroom_id) !== String(selectedClassroom)) return false;
-      if (selectedSection && String(e.section_name) !== String(selectedSection)) return false; // section filter by name since we have section_name
-      // date range filter
-      if (range !== "all") {
-        const d = e.exam_date ? new Date(e.exam_date) : null;
-        if (d && !isNaN(d)) {
-          d.setHours(0,0,0,0);
-          if (range === "upcoming" && d < today) return false;
-          if (range === "past" && d >= today) return false;
-        }
-      }
       return true;
     });
-  }, [items, search, selectedClassroom, selectedSection, range]);
+  }, [items, search, selectedClassroom, range]);
 
   async function load(p = page) {
     try {
@@ -56,8 +42,8 @@ export default function Exams() {
         page: p,
         limit,
         ...(selectedClassroom ? { classroom_id: Number(selectedClassroom) } : {}),
-        ...(selectedSection ? { section_name: selectedSection } : {}),
-        ...(range !== "all" ? { filter: range } : {}),
+        // teacher API doesn't accept section_name; we filter client-side
+        filter: range,
       };
       const res = await getTeacherExams(params);
       // backend: { status, code, message, resources: { data: { exams: [], pagination: {} } } }
@@ -92,52 +78,40 @@ export default function Exams() {
     }
   }
 
-  useEffect(() => { load(1); setPage(1); }, [selectedClassroom, selectedSection, range, limit]);
+  useEffect(() => { load(1); setPage(1); }, [selectedClassroom, range, limit]);
   useEffect(() => { load(page); }, []);
 
-  // Load class/section options for filters
+  // Load class/section options for filters (from teacher/classrooms)
   useEffect(() => {
     (async () => {
       try {
         const res = await getTeacherClassrooms();
         const raw = Array.isArray(res?.resources?.data) ? res.resources.data : [];
-        const classes = [];
-        const sectionsByClass = {};
-        raw.forEach((cls) => {
-          const sec = Array.isArray(cls.sections) ? cls.sections : [];
-          sec.forEach((s) => {
-            classes.push({
-              classroom_id: s.classroom_id,
-              class_name: cls.class_name,
-              section_name: s.section_name,
-            });
-            if (!sectionsByClass[s.classroom_id]) sectionsByClass[s.classroom_id] = new Set();
-            sectionsByClass[s.classroom_id].add(s.section_name);
-          });
+        const classMap = new Map(); // key: class_id
+        const sectionsByClassId = {}; // class_id -> [{ classroom_id, section_name }]
+        raw.forEach((c) => {
+          if (c.class_id != null) {
+            classMap.set(String(c.class_id), { class_id: c.class_id, class_name: c.class_name });
+            const secs = Array.isArray(c.sections) ? c.sections : [];
+            if (!sectionsByClassId[c.class_id]) sectionsByClassId[c.class_id] = [];
+            secs.forEach((s) => sectionsByClassId[c.class_id].push({ classroom_id: s.classroom_id, section_name: s.section_name }));
+          }
         });
-        // Unique classes by classroom_id
-        const uniqueClasses = Object.values(classes.reduce((acc, c) => {
-          if (!acc[c.classroom_id]) acc[c.classroom_id] = c;
-          return acc;
-        }, {}));
-        setClassOptions(uniqueClasses.map((c) => ({ value: c.classroom_id, label: `${c.class_name}` })));
-        // store sections map in state via closure
-        setSectionOptions((prev) => prev); // no-op init; will compute when class changes
-        // attach map to component via ref alternative
-        (Exams._sectionsByClass = sectionsByClass);
+        setClassOptions(Array.from(classMap.values()).map(x => ({ value: x.class_id, label: x.class_name })));
+        Exams._sectionsByClassId = sectionsByClassId;
       } catch (e) {
         // ignore filter options failure
       }
     })();
   }, []);
 
-  // Update section options when classroom changes
+  // Update section options when class changes
   useEffect(() => {
-    const map = Exams._sectionsByClass || {};
-    const set = map[selectedClassroom] || new Set();
-    setSectionOptions(Array.from(set).map((name) => ({ value: name, label: `Sec ${name}` })));
-    setSelectedSection("");
-  }, [selectedClassroom]);
+    const map = Exams._sectionsByClassId || {};
+    const arr = map[selectedClassId] || [];
+    setSectionOptions(arr.map((s) => ({ value: s.classroom_id, label: `Sec ${s.section_name}` })));
+    setSelectedClassroom("");
+  }, [selectedClassId]);
 
   return (
     <div className="p-3 sm:p-4 md:p-6">
@@ -149,8 +123,8 @@ export default function Exams() {
           </div>
           <div className="flex flex-wrap gap-2">
             <select
-              value={selectedClassroom}
-              onChange={(e) => setSelectedClassroom(e.target.value)}
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             >
               <option value="">All Classes</option>
@@ -159,10 +133,10 @@ export default function Exams() {
               ))}
             </select>
             <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
+              value={selectedClassroom}
+              onChange={(e) => setSelectedClassroom(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              disabled={!selectedClassroom}
+              disabled={!selectedClassId}
             >
               <option value="">All Sections</option>
               {sectionOptions.map((o) => (
@@ -174,7 +148,6 @@ export default function Exams() {
               onChange={(e) => setRange(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             >
-              <option value="all">All</option>
               <option value="upcoming">Upcoming</option>
               <option value="past">Past</option>
             </select>
@@ -236,16 +209,20 @@ export default function Exams() {
                       <td className="px-3 py-2">{e.pass_marks ?? '-'}</td>
                       <td className="px-3 py-2">
                         <div className="flex gap-2">
-                          <Link to={`/results/${e.scheduler_id}`} className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-xs">
-                            View Results
-                          </Link>
-                          <Link
-                            to={`/exams/${e.scheduler_id}/entry`}
-                            state={{ scheduler_id: e.scheduler_id, exam_id: e.exam_id, subject_id: e.subject_id, classroom_id: e.classroom_id }}
-                            className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-xs"
-                          >
-                            Assign Marks
-                          </Link>
+                          {range === 'past' && (
+                            <>
+                              <Link to={`/results/${e.scheduler_id}`} className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-xs">
+                                View Results
+                              </Link>
+                              <Link
+                                to={`/exams/${e.scheduler_id}/entry`}
+                                state={{ scheduler_id: e.scheduler_id, exam_id: e.exam_id, subject_id: e.subject_id, classroom_id: e.classroom_id }}
+                                className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-xs"
+                              >
+                                Assign Marks
+                              </Link>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

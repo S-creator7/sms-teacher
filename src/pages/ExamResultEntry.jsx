@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
-import { getSchedulerResults, submitBatchResults } from "../Utility/examApi";
+import { getSchedulerResults, submitBatchResults, getTeacherExams } from "../Utility/examApi";
 import toast from "react-hot-toast";
+import { getStudentList } from "../Utility/dashboardApi";
 
 export default function ExamResultEntry() {
   const { schedulerId } = useParams();
@@ -27,35 +28,96 @@ export default function ExamResultEntry() {
       setLoading(true);
       setError("");
       const res = await getSchedulerResults(schedulerId);
-      const list = Array.isArray(res?.resources?.data) ? res.resources.data : [];
-      const first = list[0] || {};
-      setMeta({
-        exam_name: first.exam_name,
-        subject_name: first.subject_name,
-        class_name: first.class_name,
-        section_name: first.section_name,
-        total_marks: first.total_marks,
-        pass_marks: first.pass_marks,
-        exam_date: first.exam_date,
-      });
+      const resultList = Array.isArray(res?.resources?.data) ? res.resources.data : [];
+      const first = resultList[0] || {};
+      let classroom_id = passed?.classroom_id || first.classroom_id || first.classroomId || "";
 
-      // Capture IDs from API if present
+      // Prefer meta from results; if absent, fallback to passed state; if still absent, lookup from teacher exams
+      let nextMeta = {
+        exam_name: first.exam_name || passed?.exam_name,
+        subject_name: first.subject_name || passed?.subject_name,
+        class_name: first.class_name || passed?.class_name,
+        section_name: first.section_name || passed?.section_name,
+        total_marks: first.total_marks || passed?.total_marks,
+        pass_marks: first.pass_marks || passed?.pass_marks,
+        exam_date: first.exam_date || passed?.exam_date,
+      };
+
       setIds((prev) => ({
         scheduler_id: schedulerId,
         exam_id: prev.exam_id || first.exam_id || first.examId || "",
         subject_id: prev.subject_id || first.subject_id || first.subjectId || "",
-        classroom_id: prev.classroom_id || first.classroom_id || first.classroomId || "",
+        classroom_id: prev.classroom_id || classroom_id || "",
       }));
 
-      setRows(
-        list.map((s) => ({
-          student_id: s.student_id,
-          roll_no: s.roll_number,
-          student_name: s.student_name,
-          marks_obtained: s.obtained_marks ?? "",
-          remarks: s.remarks ?? "",
-        }))
-      );
+      // Build a map of existing results by student_id for quick merge
+      const existingByStudent = new Map();
+      for (const r of resultList) {
+        if (r && r.student_id != null) {
+          existingByStudent.set(String(r.student_id), r);
+        }
+      }
+
+      // If we still lack meta or classroom_id (e.g. no results yet and no state), try to find exam by scheduler via teacher exams (paged)
+      if ((!nextMeta.class_name || !nextMeta.section_name || !nextMeta.total_marks || !classroom_id)) {
+        try {
+          const exLimit = 100; let page = 1; let totalPages = 1; let found;
+          do {
+            const ex = await getTeacherExams({ filter: 'past', page, limit: exLimit });
+            const exams = Array.isArray(ex?.resources?.data?.exams) ? ex.resources.data.exams : [];
+            for (const e of exams) {
+              if (String(e.scheduler_id) === String(schedulerId)) { found = e; break; }
+            }
+            const pg = ex?.resources?.data?.pagination; totalPages = Math.max(1, Number(pg?.total_pages || 1)); page += 1;
+          } while (!found && page <= totalPages && page <= 5);
+          if (found) {
+            nextMeta = {
+              exam_name: nextMeta.exam_name || found.exam_name,
+              subject_name: nextMeta.subject_name || found.subject_name,
+              class_name: nextMeta.class_name || found.class_name,
+              section_name: nextMeta.section_name || found.section_name,
+              total_marks: nextMeta.total_marks || found.total_marks,
+              pass_marks: nextMeta.pass_marks || found.pass_marks,
+              exam_date: nextMeta.exam_date || found.exam_date,
+            };
+            classroom_id = classroom_id || found.classroom_id;
+          }
+        } catch (_) { /* ignore */ }
+      }
+
+      setMeta(nextMeta);
+
+      // Fetch complete classroom student list so all students appear even if no results exist yet
+      let students = [];
+      if (classroom_id) {
+        try {
+          const sres = await getStudentList(classroom_id);
+          const sdata = Array.isArray(sres?.resources?.data) ? sres.resources.data : [];
+          students = sdata.map((s) => ({
+            student_id: s.student_id,
+            roll_no: s.roll_number,
+            student_name: `${s.first_name || ""} ${s.last_name || ""}`.trim(),
+          }));
+        } catch (_) {
+          // fallback: if students can't be loaded, at least show those present in results
+          students = resultList
+            .filter((s) => s.student_id != null)
+            .map((s) => ({ student_id: s.student_id, roll_no: s.roll_number, student_name: s.student_name }));
+        }
+      }
+
+      // Merge students with existing results (so empty rows appear)
+      const merged = students.map((stu) => {
+        const ex = existingByStudent.get(String(stu.student_id));
+        return {
+          student_id: stu.student_id,
+          roll_no: stu.roll_no,
+          student_name: stu.student_name,
+          marks_obtained: ex?.obtained_marks ?? "",
+          remarks: ex?.remarks ?? "",
+        };
+      });
+      setRows(merged);
     } catch (e) {
       setError(e?.response?.data?.message || e.message || "Failed to load students");
     } finally {
@@ -187,7 +249,7 @@ export default function ExamResultEntry() {
               Reset
             </button>
             <button type="submit" className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-sm" disabled={loading || submitting}>
-              {submitting ? "Saving..." : "Save Results"}
+              {submitting ? "Saving..." : (rows.some(r => r.marks_obtained !== "" && r.marks_obtained !== null && r.marks_obtained !== undefined) ? "Update Results" : "Save Results")}
             </button>
           </div>
         </form>
