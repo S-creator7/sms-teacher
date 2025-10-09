@@ -22,6 +22,8 @@ import ExamResultEntry from "./pages/ExamResultEntry";
 import Reports from "./pages/Reports";
 import Leave from "./pages/Leave";
 import Posh from "./pages/Posh";
+import Assignments from "./pages/Assignments";
+import Homework from "./pages/Homework";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -168,6 +170,22 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Exams />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assignments"
+                element={
+                  <ProtectedRoute>
+                    <Assignments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/homework"
+                element={
+                  <ProtectedRoute>
+                    <Homework />
                   </ProtectedRoute>
                 }
               />

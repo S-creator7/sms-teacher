@@ -26,6 +26,8 @@ const navGroups = [
     items: [
       { label: "Curriculum", to: "/curriculum", icon: LuBookOpen },
       { label: "Exams", to: "/exams", icon: LuGraduationCap },
+      { label: "Homework", to: "/homework", icon: LuFileText },
+      { label: "Assignments", to: "/assignments", icon: LuFileText },
       { label: "Results", to: "/results", icon: LuFileText },
     ],
   },
