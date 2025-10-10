@@ -1,5 +1,7 @@
 import { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { UserContext } from "../components/Provider";
+import { markTeacherAttendance } from "../Utility/attendanceApi";
+import { toast } from "react-toastify";
 import {
   getTodayTimetable,
   getTeacherClassrooms,
@@ -25,15 +27,15 @@ function getDayLabel(date) {
 
 function formatTime(timeString) {
   if (!timeString) return "";
-  const [hours, minutes] = timeString.split(':');
+  const [hours, minutes = "00", seconds = "00"] = timeString.split(':');
   const hour = parseInt(hours, 10);
   const period = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  return `${formattedHour}:${minutes} ${period}`;
+  const formattedHour = (hour % 12 || 12).toString().padStart(2, '0');
+  return `${formattedHour}:${minutes.padStart(2,'0')}:${seconds.padStart(2,'0')} ${period}`;
 }
 
 export default function Dashboard() {
-  const { profile } = useContext(UserContext);
+  const { profile, refreshProfile } = useContext(UserContext);
 
   const [loading, setLoading] = useState(true);
   const [timetable, setTimetable] = useState([]);
@@ -42,6 +44,7 @@ export default function Dashboard() {
   const [assignments, setAssignments] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [expandedNotifId, setExpandedNotifId] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifBusyIds, setNotifBusyIds] = useState(new Set());
   const [notifBulkBusy, setNotifBulkBusy] = useState(false);
@@ -49,6 +52,12 @@ export default function Dashboard() {
   const [exams, setExams] = useState([]);
   const [error, setError] = useState("");
   const [expandedClassroom, setExpandedClassroom] = useState(null);
+  const [attBusy, setAttBusy] = useState(false);
+  const [attError, setAttError] = useState("");
+
+  const todayAttendance = profile?.today_attendance || {};
+  const isLoggedInToday = Boolean(todayAttendance?.is_attendance_marked);
+  const hasLoggedOut = Boolean(todayAttendance?.out_time);
 
   const greeting = useMemo(() => formatGreeting(new Date()), []);
   const todayLabel = useMemo(() => getDayLabel(new Date()), []);
@@ -217,9 +226,32 @@ export default function Dashboard() {
     setExpandedClassroom(prev => prev === classroomId ? null : classroomId);
   }, []);
 
+  const onToggleTeacherAttendance = useCallback(async () => {
+    setAttError("");
+    try {
+      setAttBusy(true);
+      const coords = await new Promise((resolve) => {
+        if (!navigator.geolocation) return resolve({ latitude: 0, longitude: 0 });
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+          () => resolve({ latitude: 0, longitude: 0 }),
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      });
+      const res = await markTeacherAttendance(coords);
+      await refreshProfile();
+      toast.success(res?.message || (isLoggedInToday && !hasLoggedOut ? "Logout successful" : "Login successful"));
+    } catch (e) {
+      const msg = e?.response?.data?.message || e?.message || "Failed to update attendance";
+      setAttError(msg);
+      toast.error(msg);
+    } finally {
+      setAttBusy(false);
+    }
+  }, [refreshProfile]);
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
+    <div className="p-4 sm:p-6 font-sans">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 relative mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -237,7 +269,40 @@ export default function Dashboard() {
                 <p className="text-gray-600 text-sm sm:text-base mt-1">Here's your overview for {todayLabel}</p>
               </div>
             </div>
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-3 flex-wrap">
+              <div className="flex items-center gap-3 p-2 rounded-xl border border-gray-200 bg-white shadow-sm w-full sm:w-auto">
+                <div className="text-sm flex-1">
+                  <div className="text-gray-700 font-semibold">In: <span className="font-normal">{todayAttendance?.in_time ? formatTime(todayAttendance.in_time) : '-'}</span></div>
+                  <div className="text-gray-700 font-semibold">Out: <span className="font-normal">{todayAttendance?.out_time ? formatTime(todayAttendance.out_time) : '-'}</span></div>
+                </div>
+                <button
+                  onClick={onToggleTeacherAttendance}
+                  disabled={attBusy}
+                  className={`group inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+                    isLoggedInToday && !hasLoggedOut
+                      ? "bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-700 hover:to-red-700"
+                      : "bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-700 hover:to-green-700"
+                  } flex-shrink-0`}
+                  title={isLoggedInToday && !hasLoggedOut ? "Logout" : "Login"}
+                >
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-lg bg-white/15">
+                    {isLoggedInToday && !hasLoggedOut ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span>{isLoggedInToday && !hasLoggedOut ? "Logout" : "Login"}</span>
+                </button>
+              </div>
               <button onClick={toggleNotifDrawer} className="relative p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
                 <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9" />
@@ -248,6 +313,9 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
+          {attError && (
+            <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{attError}</div>
+          )}
         </div>
 
         {notifOpen && (
@@ -283,7 +351,9 @@ export default function Dashboard() {
                   {(notifications || []).length === 0 ? (
                     <div className="p-6 text-sm text-gray-500 text-center font-medium">No notifications</div>
                   ) : (
-                    notifications.map((n) => (
+                    notifications.map((n) => {
+                      const expanded = expandedNotifId === n.notification_id;
+                      return (
                       <div key={n.notification_id} className={`p-4 flex gap-4 ${n.is_read ? "bg-white" : "bg-blue-50"} hover:bg-gray-50 transition-colors duration-150`}>
                         <div className={`w-2 h-2 rounded-full mt-3 flex-shrink-0 ${n.is_read ? "bg-gray-300" : "bg-blue-500"}`} />
                         <div className="min-w-0 flex-1">
@@ -297,10 +367,16 @@ export default function Dashboard() {
                                 )}
                                 <span className="text-xs text-gray-500 font-medium">{timeAgo(n.created_at)}</span>
                               </div>
-                              <div className="font-semibold text-gray-900 text-base mb-1 truncate">{n.title || "Notification"}</div>
-                              <div className="text-sm text-gray-700 line-clamp-2 leading-relaxed">{n.message}</div>
+                              <div className={`font-semibold text-gray-900 text-base mb-1 ${expanded ? '' : 'truncate'}`}>{n.title || "Notification"}</div>
+                              <div className={`text-sm text-gray-700 leading-relaxed ${expanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}`}>{n.message}</div>
                             </div>
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => setExpandedNotifId(expanded ? null : n.notification_id)}
+                                className="text-sm font-semibold text-blue-600 hover:underline"
+                              >
+                                {expanded ? 'See less' : 'See more'}
+                              </button>
                               <button
                                 onClick={() => onToggleRead(n)}
                                 disabled={notifBusyIds.has(n.notification_id)}
@@ -316,7 +392,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </div>
-                    ))
+                    )})
                   )}
                 </div>
               </div>
@@ -541,7 +617,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

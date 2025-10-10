@@ -19,6 +19,7 @@ const navGroups = [
       { label: "Dashboard", to: "/dashboard", icon: LuLayoutDashboard },
       { label: "Timetable", to: "/timetable", icon: LuCalendar },
       { label: "Attendance", to: "/attendance", icon: LuUsers },
+      { label: "My Attendance", to: "/my-attendance", icon: LuUsers },
     ],
   },
   {

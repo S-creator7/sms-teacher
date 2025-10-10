@@ -3,6 +3,8 @@ import { useState, useEffect, useContext } from "react";
 import Provider, { UserContext } from "./components/Provider";
 import Loader from "./components/loader";
 import { Toaster } from "react-hot-toast";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -24,6 +26,7 @@ import Leave from "./pages/Leave";
 import Posh from "./pages/Posh";
 import Assignments from "./pages/Assignments";
 import Homework from "./pages/Homework";
+import MyAttendance from "./pages/MyAttendance";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -65,6 +68,7 @@ function AppContent() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Toaster position="top-center" />
+      <ToastContainer position="top-center" autoClose={2500} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover theme="colored" />
       {loading && <Loader />}
 
       {!hideSidebar && (
@@ -130,6 +134,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Attendance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-attendance"
+                element={
+                  <ProtectedRoute>
+                    <MyAttendance />
                   </ProtectedRoute>
                 }
               />

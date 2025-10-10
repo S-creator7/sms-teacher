@@ -74,8 +74,7 @@ export default function Timetable() {
   const hasAnyData = useMemo(() => Object.values(weekMap).some((arr) => (arr || []).length > 0), [weekMap]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h1 className="text-xl font-semibold text-gray-900">Timetable</h1>
@@ -189,7 +188,6 @@ export default function Timetable() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }

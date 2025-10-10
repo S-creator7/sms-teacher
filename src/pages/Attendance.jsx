@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { getTeacherClassrooms, getAttendanceByClassroom } from "../Utility/attendanceApi";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { getTeacherClassrooms, getAttendanceByClassroom, postClassAttendance, updateStudentAttendance } from "../Utility/attendanceApi";
 import { exportStudentAttendance, exportSingleStudentAttendance } from "../Utility/exportApi";
 import { getClassroomStudents } from "../Utility/assignmentApi";
+import { UserContext } from "../components/Provider";
+import { toast } from "react-toastify";
 
 function formatDateISO(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -9,6 +11,7 @@ function formatDateISO(d) {
 }
 
 export default function Attendance() {
+  const { profile } = useContext(UserContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,6 +23,12 @@ export default function Attendance() {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
 
+  // For taking attendance
+  const [editable, setEditable] = useState(false);
+  const [editRows, setEditRows] = useState([]); // {student_id, name, status, remark}
+  const [comments, setComments] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   const [showExport, setShowExport] = useState(false);
   const [expClassId, setExpClassId] = useState("");
   const [expClassroomId, setExpClassroomId] = useState("");
@@ -28,13 +37,30 @@ export default function Attendance() {
   const [exporting, setExporting] = useState(false);
   const [exportStudents, setExportStudents] = useState([]); // students listed for individual export
 
+  // Inline edit a single existing attendance record
+  const [rowEditingId, setRowEditingId] = useState(null);
+  const [rowEditStatus, setRowEditStatus] = useState("Present");
+  const [rowEditRemark, setRowEditRemark] = useState("");
+
   const filtered = useMemo(() => {
     if (!search) return students;
     const q = search.toLowerCase();
     return students.filter((s) =>
-      `${s.roll_no || ""} ${s.first_name || ""} ${s.last_name || ""}`.toLowerCase().includes(q)
+      `${s.roll_no || ""} ${s.first_name || ""} ${s.middle_name || ""} ${s.last_name || ""}`
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase()
+        .includes(q)
     );
   }, [students, search]);
+
+  const isFutureSelected = useMemo(() => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const sel = new Date(date);
+    sel.setHours(0,0,0,0);
+    return sel.getTime() > today.getTime();
+  }, [date]);
 
   useEffect(() => {
     let mounted = true;
@@ -77,10 +103,14 @@ export default function Attendance() {
   }, []);
 
   async function loadAttendance() {
+    if (!profile?.today_attendance?.is_attendance_marked) return;
     if (!selectedClassroom) return;
     try {
       setLoading(true);
       setError("");
+      if (isFutureSelected) {
+        toast.warn("You are viewing a future date. Submitting will mark attendance in advance.");
+      }
       const res = await getAttendanceByClassroom(selectedClassroom, date);
       const list = Array.isArray(res?.resources?.data)
         ? res.resources.data
@@ -90,10 +120,12 @@ export default function Attendance() {
       const rows = list.map((r) => {
         const status = r.attendance_status || r.status || "pending";
         return {
+          attendance_id: r.student_attendance_id || r.attendance_id || r.id,
           student_id: r.student_id,
           roll_no: r.roll_no || r.roll_number || r.student_roll_no || r.rollno || r.roll || "-",
           first_name: r.first_name || "",
-          last_name: r.last_name || r.middle_name || "",
+          middle_name: r.middle_name || "",
+          last_name: r.last_name || "",
           status,
           is_present: /present/i.test(status),
           is_absent: /absent/i.test(status),
@@ -101,6 +133,33 @@ export default function Attendance() {
         };
       });
       setStudents(rows);
+
+      // If no attendance exists for the selected date/classroom, load roster for taking attendance
+      if (rows.length === 0 && profile?.today_attendance?.is_attendance_marked) {
+        try {
+          const r = await getClassroomStudents(selectedClassroom);
+          const data = Array.isArray(r?.resources?.data)
+            ? r.resources.data
+            : Array.isArray(r?.data)
+              ? r.data
+              : [];
+          const defaults = data.map((s) => ({
+            student_id: s.student_id,
+            roll_no: s.roll_number || s.roll_no || "-",
+            name: [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" "),
+            status: "Present",
+            remark: "",
+          }));
+          setEditRows(defaults);
+          setEditable(true);
+        } catch {
+          setEditable(false);
+          setEditRows([]);
+        }
+      } else {
+        setEditable(false);
+        setEditRows([]);
+      }
     } catch (e) {
       setError(e?.response?.data?.message || e.message || "Failed to load attendance");
     } finally {
@@ -113,6 +172,7 @@ export default function Attendance() {
   }, [selectedClassroom, date]);
 
   async function openExportModal() {
+    if (!profile?.today_attendance?.is_attendance_marked) return;
     let defaultClassId = expClassId;
     let defaultClassroomId = expClassroomId;
 
@@ -160,12 +220,20 @@ export default function Attendance() {
   }, [showExport]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6">
+      <div className="w-full">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Student Attendance</h1>
           <p className="text-sm text-gray-600 mt-1">View and manage daily student attendance records</p>
         </div>
+
+        {!profile?.today_attendance?.is_attendance_marked && (
+          <div className="mb-6 p-4 rounded-xl bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
+            <div className="font-semibold mb-1">Action required</div>
+            <div className="mb-2">You must Login for the day before accessing student attendance.</div>
+            <a href="/my-attendance/today" className="inline-block px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">Go to My Attendance</a>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-200">
@@ -173,6 +241,11 @@ export default function Attendance() {
               <div className="flex-1">
                 <h2 className="text-lg font-semibold text-gray-800">Attendance Records</h2>
                 <p className="text-sm text-gray-500">Select class and date to view attendance</p>
+                {isFutureSelected && (
+                  <div className="mt-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800">
+                    You are marking attendance for a future date. Please confirm before submitting.
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -182,6 +255,7 @@ export default function Attendance() {
                     className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm min-w-[220px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     value={selectedClassroom}
                     onChange={(e) => setSelectedClassroom(e.target.value)}
+                    disabled={!profile?.today_attendance?.is_attendance_marked}
                   >
                     {classrooms.map((c) => (
                       <option key={c.classroom_id} value={c.classroom_id}>
@@ -198,6 +272,7 @@ export default function Attendance() {
                     className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
+                    disabled={!profile?.today_attendance?.is_attendance_marked}
                   />
                 </div>
               </div>
@@ -235,6 +310,7 @@ export default function Attendance() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10 border border-gray-300 rounded-lg px-4 py-2.5 text-sm w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={!profile?.today_attendance?.is_attendance_marked}
                   />
                 </div>
               </div>
@@ -254,6 +330,7 @@ export default function Attendance() {
                 <button
                   onClick={openExportModal}
                   className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  disabled={!profile?.today_attendance?.is_attendance_marked}
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v8m4-4H8" />
@@ -277,12 +354,17 @@ export default function Attendance() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Student Name
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Remarks
-                      </th>
+                      {editable ? (
+                        <>
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Remark</th>
+                        </>
+                      ) : (
+                        <>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Remarks</th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -306,7 +388,7 @@ export default function Attendance() {
                           </td>
                         </tr>
                       ))
-                    ) : filtered.length === 0 ? (
+                    ) : (!editable && filtered.length === 0) ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center justify-center text-gray-500">
@@ -323,6 +405,35 @@ export default function Attendance() {
                           </div>
                         </td>
                       </tr>
+                    ) : editable ? (
+                      (editRows || []).filter((s) => `${s.roll_no || ""} ${s.name || ""}`.toLowerCase().includes(search.toLowerCase())).map((s, idx) => (
+                        <tr key={s.student_id || idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{idx + 1}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{s.student_id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{s.name || '-'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex gap-2">
+                              {['Present','Absent','Late'].map((opt) => (
+                                <button
+                                  key={opt}
+                                  onClick={() => setEditRows((rows) => rows.map((r) => r.student_id === s.student_id ? { ...r, status: opt } : r))}
+                                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${s.status === opt ? (opt==='Present' ? 'bg-green-600 text-white border-green-700' : opt==='Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600') : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                >
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              value={s.remark || ''}
+                              onChange={(e) => setEditRows((rows) => rows.map((r) => r.student_id === s.student_id ? { ...r, remark: e.target.value } : r))}
+                              placeholder="Optional remark"
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </td>
+                        </tr>
+                      ))
                     ) : (
                       filtered.map((s, idx) => (
                         <tr key={s.student_id || idx} className="hover:bg-gray-50 transition-colors">
@@ -331,23 +442,90 @@ export default function Attendance() {
                             {s.student_id && s.student_id !== "-" ? s.student_id : "-"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {`${s.first_name || ""} ${s.last_name || ""}`.trim() || "-"}
+                            {`${s.first_name || ""} ${s.middle_name || ""} ${s.last_name || ""}`.replace(/\s+/g, " ").trim() || "-"}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.status === "present" || s.is_present
-                                ? "bg-green-100 text-green-800 border border-green-200"
-                                : s.status === "absent" || s.is_absent
-                                  ? "bg-red-100 text-red-800 border border-red-200"
-                                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                                }`}
-                            >
-                              {s.status || (s.is_present ? "present" : s.is_absent ? "absent" : "pending")}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs truncate">
-                            {s.remark || "-"}
-                          </td>
+                          {rowEditingId === s.attendance_id ? (
+                            <>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex gap-2">
+                                  {['Present','Absent','Late'].map((opt) => (
+                                    <button
+                                      key={opt}
+                                      onClick={() => setRowEditStatus(opt)}
+                                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${rowEditStatus === opt ? (opt==='Present' ? 'bg-green-600 text-white border-green-700' : opt==='Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600') : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs">
+                                <input
+                                  value={rowEditRemark}
+                                  onChange={(e) => setRowEditRemark(e.target.value)}
+                                  placeholder="Optional remark"
+                                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const res = await updateStudentAttendance(s.attendance_id, { attendance_status: rowEditStatus, remark: rowEditRemark ?? "" });
+                                        toast.success(res?.message || 'Updated');
+                                        setRowEditingId(null);
+                                        await loadAttendance();
+                                      } catch (e) {
+                                        toast.error(e?.response?.data?.message || e?.message || 'Update failed');
+                                      }
+                                    }}
+                                    className="px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setRowEditingId(null)}
+                                    className="px-3 py-2 rounded-lg text-xs font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${/present/i.test(s.status) || s.is_present
+                                    ? "bg-green-100 text-green-800 border border-green-200"
+                                    : /absent/i.test(s.status) || s.is_absent
+                                      ? "bg-red-100 text-red-800 border border-red-200"
+                                      : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                                    }`}
+                                >
+                                  {s.status || (s.is_present ? "Present" : s.is_absent ? "Absent" : "Late")}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs truncate">
+                                {s.remark || "-"}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                {profile?.today_attendance?.is_attendance_marked && (
+                                  <button
+                                    onClick={() => {
+                                      setRowEditingId(s.attendance_id);
+                                      setRowEditStatus(/present|absent|late/i.test(s.status) ? s.status.replace(/\b\w/g, c => c.toUpperCase()) : 'Present');
+                                      setRowEditRemark(s.remark && s.remark !== '-' ? s.remark : '');
+                                    }}
+                                    className="px-3 py-2 rounded-lg text-xs font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                  >
+                                    Edit
+                                  </button>
+                                )}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))
                     )}
@@ -355,8 +533,71 @@ export default function Attendance() {
                 </table>
               </div>
             </div>
+            {/* Controls for taking attendance */}
+            {editable && (
+              <div className="mt-4 space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-gray-700 font-medium">Mark all:</span>
+                  {['Present','Absent','Late'].map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setEditRows((rows) => rows.map((r) => ({ ...r, status: opt })))}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold border ${opt==='Present' ? 'bg-green-600 text-white border-green-700' : opt==='Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600'}`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">Comments (optional)</label>
+                  <textarea
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Any overall comments for today's attendance"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => setEditable(false)}
+                    className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!selectedClassroom) return;
+                      try {
+                        setSubmitting(true);
+                        const payload = {
+                          attendance_date: date,
+                          attendance: editRows.map((r) => ({ student_id: r.student_id, attendance_status: r.status, remark: r.remark ?? "" })),
+                          comments: comments || undefined,
+                        };
+                        const res = await postClassAttendance(selectedClassroom, payload);
+                        toast.success(res?.message || "Attendance submitted");
+                        setEditable(false);
+                        setEditRows([]);
+                        setComments("");
+                        await loadAttendance();
+                      } catch (e) {
+                        toast.error(e?.response?.data?.message || e?.message || "Failed to submit attendance");
+                      } finally {
+                        setSubmitting(false);
+                      }
+                    }}
+                    disabled={submitting || editRows.length === 0}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold shadow ${submitting ? 'bg-gray-400 text-gray-800' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Attendance'}
+                  </button>
+                </div>
+              </div>
+            )}
 
-            {!loading && filtered.length > 0 && (
+            {/* Footer info for view mode */}
+            {!loading && !editable && filtered.length > 0 && (
               <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
                 <div>
                   Showing <span className="font-medium">{filtered.length}</span> of{" "}
