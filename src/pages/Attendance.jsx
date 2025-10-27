@@ -231,7 +231,7 @@ export default function Attendance() {
           <div className="mb-6 p-4 rounded-xl bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
             <div className="font-semibold mb-1">Action required</div>
             <div className="mb-2">You must Login for the day before accessing student attendance.</div>
-            <a href="/my-attendance/today" className="inline-block px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">Go to My Attendance</a>
+            <a href="/my-attendance" className="inline-block px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">Go to My Attendance</a>
           </div>
         )}
 

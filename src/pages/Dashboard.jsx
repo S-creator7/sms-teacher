@@ -324,7 +324,7 @@ export default function Dashboard() {
               className="fixed inset-0" 
               onClick={closeNotifDrawer}
             />
-            <div className="relative w-full max-w-md h-full bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out translate-x-0">
+            <div className="relative w-full sm:max-w-md md:max-w-lg h-full bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out translate-x-0">
               <div className="h-full flex flex-col">
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
                   <div className="font-bold text-gray-900 text-xl">Notifications</div>
@@ -340,6 +340,7 @@ export default function Dashboard() {
                     <button
                       onClick={closeNotifDrawer}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                      aria-label="Close notifications"
                     >
                       <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -353,46 +354,69 @@ export default function Dashboard() {
                   ) : (
                     notifications.map((n) => {
                       const expanded = expandedNotifId === n.notification_id;
+                      const fullMsg = String(n.message ?? "");
                       return (
-                      <div key={n.notification_id} className={`p-4 flex gap-4 ${n.is_read ? "bg-white" : "bg-blue-50"} hover:bg-gray-50 transition-colors duration-150`}>
-                        <div className={`w-2 h-2 rounded-full mt-3 flex-shrink-0 ${n.is_read ? "bg-gray-300" : "bg-blue-500"}`} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-4">
+                        <div key={n.notification_id} className={`p-4 ${n.is_read ? "bg-white" : "bg-blue-50"} hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0`}>
+                          <div className="flex gap-4">
+                            <div className={`w-2 h-2 rounded-full mt-3 flex-shrink-0 ${n.is_read ? "bg-gray-300" : "bg-blue-500"}`} />
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                {n.type_name && (
-                                  <span className="text-xs font-medium uppercase tracking-wide px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                                    {String(n.type_name).replaceAll('_',' ')}
-                                  </span>
-                                )}
-                                <span className="text-xs text-gray-500 font-medium">{timeAgo(n.created_at)}</span>
-                              </div>
-                              <div className={`font-semibold text-gray-900 text-base mb-1 ${expanded ? '' : 'truncate'}`}>{n.title || "Notification"}</div>
-                              <div className={`text-sm text-gray-700 leading-relaxed ${expanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}`}>{n.message}</div>
-                            </div>
-                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                              <button
+                              <div
+                                className="flex items-start justify-between gap-4 cursor-pointer select-none"
                                 onClick={() => setExpandedNotifId(expanded ? null : n.notification_id)}
-                                className="text-sm font-semibold text-blue-600 hover:underline"
+                                role="button"
+                                aria-expanded={expanded}
                               >
-                                {expanded ? 'See less' : 'See more'}
-                              </button>
-                              <button
-                                onClick={() => onToggleRead(n)}
-                                disabled={notifBusyIds.has(n.notification_id)}
-                                className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition-colors duration-200 ${
-                                  n.is_read 
-                                    ? "border-gray-300 text-gray-700 hover:bg-gray-50" 
-                                    : "border-blue-600 text-blue-600 hover:bg-blue-50"
-                                } disabled:opacity-50`}
-                              >
-                                {n.is_read ? "Mark unread" : "Mark read"}
-                              </button>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-3 mb-1.5">
+                                    {n.type_name && (
+                                      <span className="text-xs font-medium uppercase tracking-wide px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                        {String(n.type_name).replaceAll('_',' ')}
+                                      </span>
+                                    )}
+                                    <span className="text-xs text-gray-500 font-medium">{timeAgo(n.created_at)}</span>
+                                  </div>
+                                  <div className="font-semibold text-gray-900 text-base truncate">{n.title || "Notification"}</div>
+                                  {!expanded && (
+                                    <div className="text-sm text-gray-700 mt-1 line-clamp-1">
+                                      {fullMsg}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className={`mt-1.5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>
+                                  <svg className="w-5 h-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+                              {expanded && (
+                                <div className="mt-3">
+                                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{fullMsg}</div>
+                                  <div className="mt-3 flex items-center justify-between gap-3">
+                                    <button
+                                      onClick={() => setExpandedNotifId(null)}
+                                      className="text-sm font-semibold text-blue-600 hover:underline"
+                                    >
+                                      Collapse
+                                    </button>
+                                    <button
+                                      onClick={() => onToggleRead(n)}
+                                      disabled={notifBusyIds.has(n.notification_id)}
+                                      className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition-colors duration-200 ${
+                                        n.is_read 
+                                          ? "border-gray-300 text-gray-700 hover:bg-gray-50" 
+                                          : "border-blue-600 text-blue-600 hover:bg-blue-50"
+                                      } disabled:opacity-50`}
+                                    >
+                                      {n.is_read ? "Mark unread" : "Mark read"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )})
+                      )
+                    })
                   )}
                 </div>
               </div>
@@ -404,13 +428,32 @@ export default function Dashboard() {
           <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-800 font-medium">{error}</div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+        {/* KPI Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="text-sm text-gray-500 font-medium">My Classes</div>
+            <div className="mt-1 text-2xl font-bold text-gray-900">{classrooms.length}</div>
+            <div className="mt-2 text-xs text-gray-500">Total active sections</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="text-sm text-gray-500 font-medium">Pending Assignments</div>
+            <div className="mt-1 text-2xl font-bold text-gray-900">{pendingAssignments.pending}</div>
+            <div className="mt-2 text-xs text-gray-500">Submissions due</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="text-sm text-gray-500 font-medium">Upcoming Exams</div>
+            <div className="mt-1 text-2xl font-bold text-gray-900">{exams.length}</div>
+            <div className="mt-2 text-xs text-gray-500">Within your schedule</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 mb-6">
           <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900">Today's Schedule</h2>
               <span className="text-sm text-gray-600 font-medium">{todayLabel}</span>
             </div>
-            <div className="p-5">
+            <div className="p-4 sm:p-6">
               {loading ? (
                 <div className="space-y-4">
                   {[...Array(3)].map((_, i) => (
@@ -443,10 +486,10 @@ export default function Dashboard() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900">Messages & Announcements</h2>
             </div>
-            <div className="p-5 space-y-4 max-h-[400px] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-4 max-h-[400px] overflow-y-auto">
               {loading ? (
                 <div className="space-y-3">
                   {[...Array(3)].map((_, i) => (

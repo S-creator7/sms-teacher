@@ -3,11 +3,10 @@ import { Profile } from "../Utility/teacherApi";
 
 export const UserContext = createContext();
 
-let didInit = false;
-
 export default function Provider({ children }) {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem("token") || null);
 
   const refreshProfile = useCallback(async () => {
     setLoading(true);
@@ -21,11 +20,22 @@ export default function Provider({ children }) {
     }
   }, []);
 
+  // Watch for auth token changes and refresh profile accordingly
   useEffect(() => {
-    if (didInit) return;
-    didInit = true;
-    refreshProfile();
-  }, [refreshProfile]);
+    const interval = setInterval(() => {
+      const t = localStorage.getItem("token") || null;
+      setAuthToken((prev) => (prev !== t ? t : prev));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // When token changes (login/logout/switch user), clear and refetch profile
+    setProfile(null);
+    if (authToken) {
+      refreshProfile();
+    }
+  }, [authToken, refreshProfile]);
 
   const contextValue = {
     loading,
@@ -33,6 +43,7 @@ export default function Provider({ children }) {
     profile,
     setProfile,
     refreshProfile,
+    authToken,
   };
 
   return (
