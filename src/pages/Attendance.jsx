@@ -572,7 +572,7 @@ export default function Attendance() {
                         setSubmitting(true);
                         const payload = {
                           attendance_date: date,
-                          attendance: editRows.map((r) => ({ student_id: r.student_id, attendance_status: r.status, remark: r.remark ?? "" })),
+                          attendance: editRows.map((r) => ({ student_id: r.student_id, status: r.status, remark: r.remark ?? "" })),
                           comments: comments || undefined,
                         };
                         const res = await postClassAttendance(selectedClassroom, payload);
