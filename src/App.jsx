@@ -27,6 +27,7 @@ import Posh from "./pages/Posh";
 import Assignments from "./pages/Assignments";
 import Homework from "./pages/Homework";
 import MyAttendance from "./pages/MyAttendance";
+import Chat from "./pages/Chat";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -246,6 +247,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Posh />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <Chat />
                   </ProtectedRoute>
                 }
               />
