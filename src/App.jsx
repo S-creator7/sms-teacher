@@ -28,6 +28,9 @@ import Assignments from "./pages/Assignments";
 import Homework from "./pages/Homework";
 import MyAttendance from "./pages/MyAttendance";
 import Chat from "./pages/Chat";
+import TicketList from "./pages/Tickets/TicketList";
+import TicketCreate from "./pages/Tickets/TicketCreate";
+import TicketDetails from "./pages/Tickets/TicketDetails";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -266,6 +269,33 @@ function AppContent() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/tickets"
+                element={
+                  <ProtectedRoute>
+                    <TicketList />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/tickets/create"
+                element={
+                  <ProtectedRoute>
+                    <TicketCreate />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/tickets/:ticketId"
+                element={
+                  <ProtectedRoute>
+                    <TicketDetails />
+                  </ProtectedRoute>
+                }
+              />
+
             </Routes>
           </div>
         </main>
