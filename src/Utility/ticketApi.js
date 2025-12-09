@@ -175,3 +175,24 @@ export const uploadTeacherTicketAttachment = async (ticketId, file) => {
     };
   }
 };
+
+export const getTeacherTicketAnalytics = async () => {
+  try {
+    const response = await axios.get(
+      `${API_ENDPOINT}/v1/teacher/tickets/analytics`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch ticket analytics:", error);
+    
+    return {
+      status: false,
+      code: error.response?.status || 500,
+      message:
+        error.response?.data?.message ||
+        "Something went wrong while fetching ticket analytics",
+      resources: { data: null },
+    };
+  }
+};

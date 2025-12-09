@@ -31,6 +31,7 @@ import Chat from "./pages/Chat";
 import TicketList from "./pages/Tickets/TicketList";
 import TicketCreate from "./pages/Tickets/TicketCreate";
 import TicketDetails from "./pages/Tickets/TicketDetails";
+import TicketAnalytics from "./components/Tickets/TicketAnalytics";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -292,6 +293,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <TicketDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ticket-analytics"
+                element={
+                  <ProtectedRoute>
+                    <TicketAnalytics />
                   </ProtectedRoute>
                 }
               />

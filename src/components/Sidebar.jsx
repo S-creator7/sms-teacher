@@ -10,6 +10,9 @@ import {
   LuShieldCheck,
   LuMessageCircle,
   LuX,
+  LuTicket,
+  LuChevronDown,
+  LuChevronUp
 } from "react-icons/lu";
 
 const navGroups = [
@@ -43,36 +46,79 @@ const navGroups = [
   {
     title: "Support",
     items: [
-      { label: "All Tickets", to: "/tickets", icon: LuFileText },
+      {
+        label: "Ticket",
+        icon: LuTicket,
+        subItems: [
+          { label: "All Tickets", to: "/tickets" },
+          { label: "Analytics", to: "/ticket-analytics" }
+        ]
+      },
     ],
   },
-
 ];
 
 function Section({ title, items, onNavigate, activePath }) {
+  const [openDropdown, setOpenDropdown] = React.useState(null);
+
+  const toggleDropdown = (label) => {
+    setOpenDropdown(openDropdown === label ? null : label);
+  };
+
+  const isActive = (to) => activePath.startsWith(to);
+
   return (
     <div className="mt-6">
       <div className="px-4 text-xs font-bold text-blue-300 tracking-widest mb-3 font-sans uppercase">
         {title}
       </div>
       <div className="flex flex-col">
-        {items.map(({ label, to, icon: Icon }) => {
-          const active = activePath.startsWith(to);
+        {items.map(({ label, to, icon: Icon, subItems }) => {
+          const hasSubItems = subItems && subItems.length > 0;
+          const isDropdownOpen = openDropdown === label;
+          const isAnySubItemActive = hasSubItems && subItems.some(item => isActive(item.to));
+          const isActiveItem = to ? isActive(to) : isAnySubItemActive;
+
           return (
-            <NavLink
-              key={to + label}
-              to={to}
-              onClick={onNavigate}
-              className={() =>
-                `mx-2 my-1 flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 select-none font-sans focus-visible:outline-none focus-visible:ring-0 focus-visible:outline-offset-0 ` +
-                (active
-                  ? `bg-blue-600 text-white shadow-xl border-l-4 border-blue-400`
-                  : `text-gray-300 hover:bg-blue-700/50 hover:text-white hover:border-l-4 hover:border-blue-500/50`)
-              }
-            >
-              <Icon className="text-[20px]" />
-              <span className="text-sm font-semibold">{label}</span>
-            </NavLink>
+            <div key={label} className="flex flex-col">
+              <div
+                onClick={() => hasSubItems ? toggleDropdown(label) : onNavigate?.()}
+                className={`mx-2 my-1 flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-all duration-200 select-none font-sans focus-visible:outline-none focus-visible:ring-0 focus-visible:outline-offset-0 cursor-pointer ${
+                  isActiveItem
+                    ? `bg-blue-600 text-white shadow-xl border-l-4 border-blue-400`
+                    : `text-gray-300 hover:bg-blue-700/50 hover:text-white hover:border-l-4 hover:border-blue-500/50`
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="text-[20px]" />
+                  <span className="text-sm font-semibold">{label}</span>
+                </div>
+                {hasSubItems && (
+                  isDropdownOpen ? <LuChevronUp className="text-[16px]" /> : <LuChevronDown className="text-[16px]" />
+                )}
+              </div>
+
+              {hasSubItems && isDropdownOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {subItems.map(({ label: subLabel, to: subTo }) => (
+                    <NavLink
+                      key={subTo}
+                      to={subTo}
+                      onClick={onNavigate}
+                      className={({ isActive }) =>
+                        `block px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${
+                          isActive
+                            ? 'text-white bg-blue-600/30'
+                            : 'text-gray-300 hover:bg-blue-700/30 hover:text-white'
+                        }`
+                      }
+                    >
+                      {subLabel}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
