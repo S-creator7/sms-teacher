@@ -40,6 +40,13 @@ const navGroups = [
       { label: "Chat", to: "/chat", icon: LuMessageCircle },
     ],
   },
+  {
+    title: "Support",
+    items: [
+      { label: "All Tickets", to: "/tickets", icon: LuFileText },
+    ],
+  },
+
 ];
 
 function Section({ title, items, onNavigate, activePath }) {
