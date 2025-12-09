@@ -36,6 +36,7 @@ function AppContent() {
   const { loading } = useContext(UserContext);
 
   const hideSidebar = ["/", "/login"].includes(location.pathname);
+  const isChat = location.pathname === "/chat";
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1024px)");
@@ -76,7 +77,7 @@ function AppContent() {
         <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       )}
 
-      <div className="flex flex-1 w-full relative">
+      <div className="flex flex-1 w-full relative min-h-[calc(100vh-64px)]">
         {!hideSidebar && (
           <Sidebar
             isSidebarOpen={isSidebarOpen}
@@ -86,17 +87,16 @@ function AppContent() {
         )}
 
         <main
-          className={`flex-grow transition-all duration-300 ${!hideSidebar ? 'pt-16' : ''
-            }`}
+          className={`flex-grow transition-all duration-300 ${!hideSidebar ? 'pt-16' : ''}`}
           style={{
             width: !hideSidebar && isSidebarOpen && !isMobile
               ? 'calc(100% - 256px)'
               : '100%',
             marginLeft: 'auto',
-            minHeight: 'calc(100vh - 64px)'
+            minHeight: 'calc(100vh - 64px)',
           }}
         >
-          <div className="p-0">
+          <div className={isChat ? "p-0 h-full" : "p-0"}>
             <Routes>
               <Route
                 path="/"

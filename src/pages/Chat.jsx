@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+
 import { 
   FaPaperclip, 
   FaPaperPlane, 
@@ -49,6 +50,7 @@ export default function Chat() {
   const [pagination, setPagination] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
+
   const [messageText, setMessageText] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(false);
@@ -74,6 +76,7 @@ export default function Chat() {
   const [showForwardModal, setShowForwardModal] = useState(false);
   const [forwardMessageId, setForwardMessageId] = useState(null);
   const [showMessageMenu, setShowMessageMenu] = useState(null);
+  const messagesEndRef = useRef(null);
 
   const groupedMessages = useMemo(() => {
     const groups = [];
@@ -216,6 +219,16 @@ export default function Chat() {
       loadClassParents();
     }
   }, [showNewChat, classParents.length, loadingClassParents]);
+
+  useEffect(() => {
+    if (!selectedConversation) return;
+    if (!messagesEndRef.current) return;
+    try {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    } catch (e) {
+      console.error(e);
+    }
+  }, [groupedMessages, loadingMessages, selectedConversation]);
 
   const handleSelectConversation = (conv) => {
     setSelectedConversation(conv);
@@ -387,18 +400,18 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-screen bg-[#f5f7fb] flex overflow-hidden">
+    <div className="min-h-full w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex overflow-hidden text-sm">
       <div
         className={`${
           selectedConversation ? "hidden lg:flex" : "flex"
-        } w-full lg:w-[35%] border-r border-gray-200 flex flex-col bg-white`}
+        } w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0`}
       >
         <div className="bg-[#f7f9fc] px-5 py-2.5 border-b border-gray-200 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white font-semibold text-base">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-400 flex items-center justify-center text-white font-semibold text-xs">
               T
             </div>
-            <div className="font-semibold text-lg text-gray-800">Chats</div>
+            <div className="font-semibold text-base text-gray-800">Chats</div>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-orange-400 text-white px-2.5 py-1 rounded-full text-xs flex items-center gap-2">
@@ -448,7 +461,7 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div className="flex-1 overflow-y-auto bg-white min-h-0">
           {loadingConversations && (
             <div className="p-3 text-center text-gray-500 text-xs">Loading conversations...</div>
           )}
@@ -458,7 +471,6 @@ export default function Chat() {
           {!loadingConversations &&
             conversations.map((conv) => {
               const isSelected = selectedConversation?.conversation_id === conv.conversation_id;
-              // In the Archived tab, treat all as archived even if the flag is inconsistent
               const isArchived = conversationStatus === "archived" ? true : !!conv.is_archived;
 
               return (
@@ -469,7 +481,7 @@ export default function Chat() {
                     isSelected ? "bg-blue-50 border-l-4 border-l-blue-300" : "hover:bg-gray-50"
                   }`}
                 >
-                  <div className="w-11 h-11 rounded-full bg-orange-300 flex items-center justify-center text-base font-semibold text-white">
+                  <div className="w-9 h-9 rounded-full bg-orange-300 flex items-center justify-center text-xs font-semibold text-white">
                     {`${conv.parent_first_name || ""} ${conv.parent_last_name || ""}`.trim()[0]?.toUpperCase() ||
                       "P"}
                   </div>
@@ -527,32 +539,32 @@ export default function Chat() {
       <div
         className={`${
           selectedConversation ? "flex" : "hidden lg:flex"
-        } flex-1 flex-col bg-[#e5ddd5]`}
+        } flex-1 flex flex-col bg-slate-900 min-h-0`}
       >
         {!selectedConversation && (
           <div className="flex-1 flex items-center justify-center bg-[#f8f9fa]">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-400 mb-2">AAPLISHALA</div>
-              <div className="text-gray-500">Select a conversation to start messaging</div>
+              <div className="text-xl font-bold text-gray-400 mb-1">AAPLISHALA</div>
+              <div className="text-gray-500 text-xs">Select a conversation to start messaging</div>
             </div>
           </div>
         )}
         {selectedConversation && (
           <>
-            <div className="bg-[#f0f2f5] px-5 py-3 border-b border-gray-300 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center text-lg font-bold text-white">
+            <div className="bg-[#f0f2f5] px-4 py-2 border-b border-gray-300 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white">
                   {`${selectedConversation.parent_first_name || ""} ${
                     selectedConversation.parent_last_name || ""
                   }`.trim()[0]?.toUpperCase() || "P"}
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900">
+                  <div className="font-semibold text-gray-900 text-sm">
                     {`${selectedConversation.parent_first_name || ""} ${
                       selectedConversation.parent_last_name || ""
                     }`.trim()}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs text-gray-600">
                     {`${selectedConversation.student_first_name || ""} ${
                       selectedConversation.student_last_name || ""
                     }`.trim()}
@@ -562,27 +574,30 @@ export default function Chat() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div className="relative">
                   <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                   <input
                     value={searchInConversation}
                     onChange={(e) => setSearchInConversation(e.target.value)}
                     placeholder="Search in chat..."
-                    className="bg-white text-sm pl-12 pr-4 py-3 rounded-2xl outline-none border border-gray-300 focus:border-blue-500 w-64"
+                    className="bg-white text-xs pl-10 pr-3 py-2 rounded-2xl outline-none border border-gray-300 focus:border-blue-500 w-56"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleLoadParticipants}
-                  className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+                  className="w-9 h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
                 >
                   <FaInfoCircle size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 bg-[#e5ddd5] bg-opacity-95">
+            <div
+              className="flex-1 overflow-y-auto px-6 py-2 bg-[#e5ddd5] bg-opacity-70 min-h-0"
+              onClick={() => setShowMessageMenu(null)}
+            >
               {loadingMessages && (
                 <div className="text-center text-gray-500 py-2 text-xs">Loading messages...</div>
               )}
@@ -593,8 +608,8 @@ export default function Chat() {
                 groupedMessages.map((item) => {
                   if (item.type === "date") {
                     return (
-                      <div key={item.id} className="flex justify-center my-6">
-                        <span className="text-[11px] px-3 py-1.5 rounded-full bg-gray-300 text-gray-700 bg-opacity-80">
+                      <div className="flex justify-center my-4">
+                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-gray-300 text-gray-700 bg-opacity-80">
                           {item.label}
                         </span>
                       </div>
@@ -608,12 +623,24 @@ export default function Chat() {
                   return (
                     <div
                       key={m.message_id}
-                      className={`flex mb-4 group ${isMe ? "justify-end" : "justify-start"}`}
+                      className={`flex items-start mb-3 group ${isMe ? "justify-end" : "justify-start"}`}
                     >
-                      <div className="max-w-[70%] flex flex-col">
-                        <div className={`relative px-4 py-3 rounded-2xl shadow-sm ${
+                      <div className="relative flex items-start">
+                        {!isMe && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowMessageMenu(showMenu ? null : m.message_id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center ml-1 mr-1"
+                          >
+                            <FaEllipsisV size={10} className="text-gray-600" />
+                          </button>
+                        )}
+                        
+                        <div className={`px-3 py-2.5 rounded-2xl shadow-sm ${
                           isMe
-                            ? "bg-blue-500 text-white rounded-br-md"
+                            ? "bg-blue-500/90 text-white rounded-br-md"
                             : "bg-white text-gray-900 rounded-bl-md border border-gray-200"
                         }`}>
                           {m.message_type === "document" && m.file_url ? (
@@ -629,63 +656,68 @@ export default function Chat() {
                               {m.file_name || m.message_text}
                             </a>
                           ) : (
-                            <div className="whitespace-pre-wrap break-words">
+                            <div className="whitespace-pre-wrap break-words text-[13px] leading-snug">
                               {m.message_text}
                             </div>
                           )}
 
-                          <div className="flex items-center justify-end gap-2 mt-2">
-                            <span className={`text-xs ${isMe ? "text-blue-200" : "text-gray-500"}`}>
+                          <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                            <span className={`text-[10px] ${isMe ? "text-blue-200" : "text-gray-500"}`}>
                               {formatTime(m.created_at)}
                             </span>
                             {isMe && (
                               <span className={isRead ? "text-blue-200" : "text-blue-200"}>
-                                {isRead ? <FaCheckDouble size={12} /> : <FaCheck size={12} />}
+                                {isRead ? <FaCheckDouble size={10} /> : <FaCheck size={10} />}
                               </span>
                             )}
                           </div>
 
-                          <button
-                            onClick={() => setShowMessageMenu(showMenu ? null : m.message_id)}
-                            className={`absolute top-2 ${
-                              isMe ? "left-2" : "right-2"
-                            } opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full ${
-                              isMe ? "bg-blue-600" : "bg-gray-200"
-                            } flex items-center justify-center`}
-                          >
-                            <FaEllipsisV size={10} className={isMe ? "text-white" : "text-gray-600"} />
-                          </button>
-
-                          {showMenu && (
-                            <div className={`absolute top-10 ${
-                              isMe ? "left-2" : "right-2"
-                            } bg-white border border-gray-300 rounded-lg shadow-lg z-10 min-w-[120px]`}>
+                          <div className="relative">
+                            {isMe && (
                               <button
-                                onClick={() => openForwardModal(m.message_id)}
-                                className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowMessageMenu(showMenu ? null : m.message_id);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center ml-1"
                               >
-                                <FaShare size={12} />
-                                Forward
+                                <FaEllipsisV size={10} className="text-white" />
                               </button>
-                              <button
-                                onClick={() => handleSoftDelete(m.message_id)}
-                                className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
-                              >
-                                <FaTrash size={12} />
-                                Delete
-                              </button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
+
+                        {showMenu && (
+                          <div
+                            className={`absolute ${isMe ? 'right-8' : 'left-8'} -top-8 bg-white border border-gray-300 rounded-lg shadow-lg z-10 min-w-[120px] overflow-hidden`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={() => openForwardModal(m.message_id)}
+                              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <FaShare size={12} />
+                              Forward
+                            </button>
+                            <button
+                              onClick={() => handleSoftDelete(m.message_id)}
+                              className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <FaTrash size={12} />
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+              <div ref={messagesEndRef} />
             </div>
 
             <form
               onSubmit={handleSend}
-              className="bg-[#f0f2f5] px-4 py-3 flex items-center gap-3"
+              className="bg-[#f0f2f5]/80 px-4 py-3 flex items-center gap-3"
             >
               <label className="cursor-pointer w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-blue-500 hover:border-blue-500 transition-colors">
                 <input
