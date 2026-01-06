@@ -79,24 +79,43 @@ function Section({ title, items, onNavigate, activePath }) {
           const isAnySubItemActive = hasSubItems && subItems.some(item => isActive(item.to));
           const isActiveItem = to ? isActive(to) : isAnySubItemActive;
 
+          const baseClasses =
+            "mx-2 my-1 flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-all duration-200 select-none font-sans focus-visible:outline-none focus-visible:ring-0 focus-visible:outline-offset-0";
+
+          const activeClasses = isActiveItem
+            ? " bg-blue-600 text-white shadow-xl border-l-4 border-blue-400"
+            : " text-gray-300 hover:bg-blue-700/50 hover:text-white hover:border-l-4 hover:border-blue-500/50";
+
+          const content = (
+            <div className={baseClasses + activeClasses}>
+              <div className="flex items-center gap-3">
+                <Icon className="text-[20px]" />
+                <span className="text-sm font-semibold">{label}</span>
+              </div>
+              {hasSubItems && (
+                isDropdownOpen ? (
+                  <LuChevronUp className="text-[16px]" />
+                ) : (
+                  <LuChevronDown className="text-[16px]" />
+                )
+              )}
+            </div>
+          );
+
           return (
             <div key={label} className="flex flex-col">
-              <div
-                onClick={() => hasSubItems ? toggleDropdown(label) : onNavigate?.()}
-                className={`mx-2 my-1 flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-all duration-200 select-none font-sans focus-visible:outline-none focus-visible:ring-0 focus-visible:outline-offset-0 cursor-pointer ${
-                  isActiveItem
-                    ? `bg-blue-600 text-white shadow-xl border-l-4 border-blue-400`
-                    : `text-gray-300 hover:bg-blue-700/50 hover:text-white hover:border-l-4 hover:border-blue-500/50`
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="text-[20px]" />
-                  <span className="text-sm font-semibold">{label}</span>
+              {hasSubItems ? (
+                <div
+                  onClick={() => toggleDropdown(label)}
+                  className="cursor-pointer"
+                >
+                  {content}
                 </div>
-                {hasSubItems && (
-                  isDropdownOpen ? <LuChevronUp className="text-[16px]" /> : <LuChevronDown className="text-[16px]" />
-                )}
-              </div>
+              ) : (
+                <NavLink to={to} onClick={onNavigate} className="cursor-pointer">
+                  {content}
+                </NavLink>
+              )}
 
               {hasSubItems && isDropdownOpen && (
                 <div className="ml-8 mt-1 space-y-1">
