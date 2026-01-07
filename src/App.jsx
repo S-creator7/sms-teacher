@@ -25,6 +25,7 @@ import Reports from "./pages/Reports";
 import Leave from "./pages/Leave";
 import Posh from "./pages/Posh";
 import Assignments from "./pages/Assignments";
+import Activities from "./pages/Activities";
 import Homework from "./pages/Homework";
 import MyAttendance from "./pages/MyAttendance";
 import Chat from "./pages/Chat";
@@ -195,6 +196,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Assignments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/activities"
+                element={
+                  <ProtectedRoute>
+                    <Activities />
                   </ProtectedRoute>
                 }
               />
