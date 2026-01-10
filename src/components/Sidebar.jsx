@@ -12,7 +12,8 @@ import {
   LuX,
   LuTicket,
   LuChevronDown,
-  LuChevronUp
+  LuChevronUp,
+  LuTrophy
 } from "react-icons/lu";
 
 const navGroups = [
@@ -32,6 +33,7 @@ const navGroups = [
       { label: "Exams", to: "/exams", icon: LuGraduationCap },
       { label: "Homework", to: "/homework", icon: LuFileText },
       { label: "Assignments", to: "/assignments", icon: LuFileText },
+      { label: "Activities", to: "/activities", icon: LuTrophy },
       { label: "Results", to: "/results", icon: LuFileText },
     ],
   },
