@@ -4,33 +4,23 @@ import { LuSearch, LuFilter, LuCalendar, LuTag, LuEye } from "react-icons/lu";
 import toast from "react-hot-toast";
 
 const Events = () => {
-  const [events, setEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const itemsPerPage = 10;
 
   const categories = ["Sports", "Cultural", "Academic", "Technical", "Social", "Other"];
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const params = {
-        page: currentPage,
-        limit: 10,
-      };
-      
-      if (searchTerm) params.search = searchTerm;
-      if (selectedCategory) params.category = selectedCategory;
-
-      const response = await eventsApi.getEvents(params);
+      const response = await eventsApi.getEvents();
       
       if (response.status && response.resources) {
-        setEvents(response.resources.data || []);
-        setTotalPages(response.resources.total_pages || 1);
-        setTotal(response.resources.total || 0);
+        setAllEvents(response.resources.data || []);
       }
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -42,18 +32,41 @@ const Events = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [currentPage, searchTerm, selectedCategory]);
+  }, []);
+
+  useEffect(() => {
+    let filtered = allEvents;
+    
+    if (selectedCategory) {
+      filtered = filtered.filter(event => 
+        event.category === selectedCategory
+      );
+    }
+    
+    if (searchTerm) {
+      filtered = filtered.filter(event => 
+        event.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    setFilteredEvents(filtered);
+    setCurrentPage(1);
+  }, [allEvents, searchTerm, selectedCategory]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
-    fetchEvents();
   };
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
-    setCurrentPage(1);
   };
+
+  // Calculate pagination for filtered events
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -141,7 +154,7 @@ const Events = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading events...</p>
             </div>
-          ) : events.length === 0 ? (
+          ) : filteredEvents.length === 0 ? (
             <div className="p-8 text-center">
               <LuCalendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">No events found</p>
@@ -175,7 +188,7 @@ const Events = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {events.map((event) => (
+                    {currentEvents.map((event) => (
                       <tr key={event.event_id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
@@ -218,8 +231,8 @@ const Events = () => {
                 <div className="px-6 py-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Showing {((currentPage - 1) * 10) + 1} to{' '}
-                      {Math.min(currentPage * 10, total)} of {total} results
+                      Showing {startIndex + 1} to{' '}
+                      {Math.min(endIndex, filteredEvents.length)} of {filteredEvents.length} results
                     </div>
                     <div className="flex gap-2">
                       <button
