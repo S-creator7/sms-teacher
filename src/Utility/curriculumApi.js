@@ -9,7 +9,7 @@ function getAuthHeaders() {
 
 export async function getCurriculumApi({ class_id, classroom_id }) {
   const res = await axios.get(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/overview`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/overview`,
     {
       headers: getAuthHeaders(),
       params: { class_id, classroom_id },
@@ -20,7 +20,7 @@ export async function getCurriculumApi({ class_id, classroom_id }) {
 
 export async function subjectDetailsApi({ subject_id, class_id, classroom_id }) {
   const res = await axios.get(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/subject-details`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/subject-details`,
     {
       headers: getAuthHeaders(),
       params: { subject_id, class_id, classroom_id },
@@ -31,7 +31,7 @@ export async function subjectDetailsApi({ subject_id, class_id, classroom_id }) 
 
 export async function getSessionApi() {
   const res = await axios.get(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/session-list`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/session-list`,
     { headers: getAuthHeaders() }
   );
   return res.data;
@@ -39,7 +39,7 @@ export async function getSessionApi() {
 
 export async function getSyllabusApi() {
   const res = await axios.get(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/syllabus-list`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/syllabus-list`,
     { headers: getAuthHeaders() }
   );
   return res.data;
@@ -47,7 +47,7 @@ export async function getSyllabusApi() {
 
 export async function getModulesApi({ class_id, subject_id }) {
   const res = await axios.get(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/module-list`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/module-list`,
     {
       headers: getAuthHeaders(),
       params: { class_id, subject_id },
@@ -69,7 +69,7 @@ export async function getSubjectsApi(classroom_id) {
 
 export async function createModuleApi(body) {
   const res = await axios.post(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/create-module`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/create-module`,
     body,
     { headers: getAuthHeaders() }
   );
@@ -78,7 +78,7 @@ export async function createModuleApi(body) {
 
 export async function createTopicApi(body) {
   const res = await axios.post(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/create-topic`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/create-topic`,
     body,
     { headers: getAuthHeaders() }
   );
@@ -87,7 +87,7 @@ export async function createTopicApi(body) {
 
 export async function getTopicListApi(module_id) {
   const res = await axios.get(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/topic-list`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/topic-list`,
     {
       headers: getAuthHeaders(),
       params: { module_id },
@@ -98,7 +98,7 @@ export async function getTopicListApi(module_id) {
 
 export async function createSchoolSessionApi(body) {
   const res = await axios.post(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/create-school-session`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/create-school-session`,
     body,
     { headers: getAuthHeaders() }
   );
@@ -107,7 +107,7 @@ export async function createSchoolSessionApi(body) {
 
 export async function updateSchoolSessionApi(session_id, body) {
   const res = await axios.post(
-    `${API_ENDPOINT}/v1/school-admin/curriculum/update-school-session/${session_id}`,
+    `${API_ENDPOINT}/v1/teacher/curriculum/update-school-session/${session_id}`,
     body,
     { headers: getAuthHeaders() }
   );

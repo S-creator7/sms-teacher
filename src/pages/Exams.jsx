@@ -25,7 +25,6 @@ export default function Exams() {
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0, limit });
   const [schedWithResults, setSchedWithResults] = useState(new Set());
-  const [confirm, setConfirm] = useState({ open: false, exam: null });
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -236,7 +235,6 @@ export default function Exams() {
                               </Link>
                               {(() => {
                                 const hasResults = schedWithResults.has(Number(e.scheduler_id));
-                                const label = hasResults ? 'Update Marks' : 'Assign Marks';
                                 const baseCls = hasResults
                                   ? 'bg-red-600 hover:bg-red-700 border-red-600'
                                   : 'bg-blue-600 hover:bg-blue-700 border-blue-600';
@@ -244,17 +242,13 @@ export default function Exams() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      if (hasResults) {
-                                        setConfirm({ open: true, exam: e });
-                                        return;
-                                      }
                                       navigate(`/exams/${e.scheduler_id}/entry`, {
                                         state: { scheduler_id: e.scheduler_id, exam_id: e.exam_id, subject_id: e.subject_id, classroom_id: e.classroom_id }
                                       });
                                     }}
                                     className={`px-2.5 py-1.5 rounded-lg text-white border text-xs ${baseCls}`}
                                   >
-                                    {label}
+                                    {hasResults ? 'Marks Assigned' : 'Assign Marks'}
                                   </button>
                                 );
                               })()}
@@ -289,45 +283,6 @@ export default function Exams() {
           </div>
         </div>
       </div>
-      {/* Confirm Update Marks Modal */}
-      {confirm.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setConfirm({ open: false, exam: null })} />
-          <div className="relative bg-white w-[92%] sm:w-[420px] rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Update Marks?</h3>
-              <p className="text-xs text-gray-500 mt-1">Marks are already assigned for this exam. Do you want to update them?</p>
-            </div>
-            <div className="px-5 py-4 text-sm">
-              <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
-                <div className="font-medium text-gray-900">{confirm.exam?.exam_name} • {confirm.exam?.subject_name}</div>
-                <div className="text-gray-600 text-xs mt-1">{confirm.exam?.class_name} • Sec {confirm.exam?.section_name} • {formatDate(confirm.exam?.exam_date)}</div>
-              </div>
-            </div>
-            <div className="px-5 pb-5 flex items-center justify-end gap-2">
-              <button
-                className="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm"
-                onClick={() => setConfirm({ open: false, exam: null })}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white border border-red-600 text-sm"
-                onClick={() => {
-                  const e = confirm.exam;
-                  setConfirm({ open: false, exam: null });
-                  if (!e) return;
-                  navigate(`/exams/${e.scheduler_id}/entry`, {
-                    state: { scheduler_id: e.scheduler_id, exam_id: e.exam_id, subject_id: e.subject_id, classroom_id: e.classroom_id }
-                  });
-                }}
-              >
-                Update Marks
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

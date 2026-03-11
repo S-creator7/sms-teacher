@@ -110,6 +110,7 @@ export default function ExamResultEntry() {
       const merged = students.map((stu) => {
         const ex = existingByStudent.get(String(stu.student_id));
         return {
+          result_id: ex?.result_id,
           student_id: stu.student_id,
           roll_no: stu.roll_no,
           student_name: stu.student_name,
@@ -134,10 +135,17 @@ export default function ExamResultEntry() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
+      const hasExisting = rows.some((r) => r.result_id != null);
+
+      if (hasExisting) {
+        toast.error("Mark update is not available. Only new results can be submitted.");
+      }
+
       // Client validation for marks
       const max = Number(meta.total_marks) || undefined;
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
+        if (r.result_id != null) continue;
         if (r.marks_obtained === "" || r.marks_obtained === null || r.marks_obtained === undefined) continue; // allow empty -> will be treated as 0 below
         const val = Number(r.marks_obtained);
         if (Number.isNaN(val)) {
@@ -155,11 +163,19 @@ export default function ExamResultEntry() {
       }
 
       setSubmitting(true);
-      const results = rows.map((r) => ({
-        student_id: r.student_id,
-        marks_obtained: r.marks_obtained === "" ? 0 : Number(r.marks_obtained),
-        remarks: r.remarks || undefined,
-      }));
+      const results = rows
+        .filter((r) => r.result_id == null)
+        .filter((r) => !(r.marks_obtained === "" || r.marks_obtained === null || r.marks_obtained === undefined))
+        .map((r) => ({
+          student_id: r.student_id,
+          marks_obtained: Number(r.marks_obtained),
+          remarks: r.remarks || undefined,
+        }));
+
+      if (results.length === 0) {
+        toast.error("No new results to submit");
+        return;
+      }
       await submitBatchResults(schedulerId, results);
       toast.success("Results saved successfully");
       navigate(`/results/${schedulerId}`);
@@ -226,6 +242,7 @@ export default function ExamResultEntry() {
                           max={meta.total_marks || undefined}
                           value={r.marks_obtained}
                           onChange={(e) => updateRow(idx, "marks_obtained", e.target.value)}
+                          disabled={r.result_id != null}
                           className="w-28 border border-gray-300 rounded-lg px-2 py-1 text-sm"
                         />
                       </td>
@@ -233,6 +250,7 @@ export default function ExamResultEntry() {
                         <input
                           value={r.remarks}
                           onChange={(e) => updateRow(idx, "remarks", e.target.value)}
+                          disabled={r.result_id != null}
                           className="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm"
                           placeholder="Remarks"
                         />
@@ -249,7 +267,7 @@ export default function ExamResultEntry() {
               Reset
             </button>
             <button type="submit" className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-sm" disabled={loading || submitting}>
-              {submitting ? "Saving..." : (rows.some(r => r.marks_obtained !== "" && r.marks_obtained !== null && r.marks_obtained !== undefined) ? "Update Results" : "Save Results")}
+              {submitting ? "Saving..." : "Save Results"}
             </button>
           </div>
         </form>
