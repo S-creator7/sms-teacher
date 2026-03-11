@@ -29,6 +29,7 @@ import Activities from "./pages/Activities";
 import Homework from "./pages/Homework";
 import MyAttendance from "./pages/MyAttendance";
 import Chat from "./pages/Chat";
+import ChatLayout from "./pages/Chat/ChatLayout";
 import TicketList from "./pages/Tickets/TicketList";
 import TicketCreate from "./pages/Tickets/TicketCreate";
 import TicketDetails from "./pages/Tickets/TicketDetails";
@@ -269,7 +270,7 @@ function AppContent() {
                 path="/chat"
                 element={
                   <ProtectedRoute>
-                    <Chat />
+                    <ChatLayout />
                   </ProtectedRoute>
                 }
               />
