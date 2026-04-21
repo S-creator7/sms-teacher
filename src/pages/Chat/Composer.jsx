@@ -32,7 +32,7 @@ export default function Composer({ conversation, sending, fileUploading, onSendM
 
   return (
     <form onSubmit={send} className="bg-[#f0f2f5]/80 px-4 py-3 flex items-center gap-3">
-      <label className="cursor-pointer w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-blue-500 hover:border-blue-500 transition-colors">
+      <label className="cursor-pointer w-11 h-11 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm active:scale-95">
         <input
           type="file"
           className="hidden"
@@ -40,9 +40,11 @@ export default function Composer({ conversation, sending, fileUploading, onSendM
           disabled={fileUploading || !conversation}
         />
         {fileUploading ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+          <div className="relative flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+          </div>
         ) : (
-          <FaPaperclip size={18} />
+          <FaPaperclip size={20} className="rotate-45" />
         )}
       </label>
       <input

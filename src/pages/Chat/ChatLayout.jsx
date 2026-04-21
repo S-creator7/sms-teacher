@@ -4,6 +4,7 @@ import ChatWindow from "./ChatWindow";
 import ChatInfoModal from "./ChatInfoModal";
 import NewChatModal from "./NewChatModal";
 import ForwardModal from "./ForwardModal";
+import { useChatSocket } from "../../hooks/useChatSocket";
 import {
   getConversations,
   getMessages,
@@ -47,6 +48,7 @@ const initialState = {
   startingConversation: false,
   searchingParents: false,
   unreadSubscription: null,
+  isNewConversation: false,
   ui: {
     info: false,
     newChat: false,
@@ -54,6 +56,7 @@ const initialState = {
     forwardMessageId: null,
     showMessageMenu: null,
   },
+  lightboxImage: null,
 };
 
 function reducer(state, action) {
@@ -63,9 +66,15 @@ function reducer(state, action) {
     case "SET_PAGINATION":
       return { ...state, pagination: action.payload };
     case "SELECT_CONVERSATION":
-      return { ...state, selectedConversation: action.payload, filteredMessages: null, showMessageMenu: null };
+      return { 
+        ...state, 
+        selectedConversation: action.payload, 
+        filteredMessages: null, 
+        showMessageMenu: null,
+        isNewConversation: state.selectedConversation?.conversation_id !== action.payload?.conversation_id
+      };
     case "SET_MESSAGES":
-      return { ...state, messages: action.payload };
+      return { ...state, messages: action.payload, isNewConversation: false };
     case "FILTER_MESSAGES":
       return { ...state, filteredMessages: action.payload };
     case "UNREAD":
@@ -108,6 +117,48 @@ function reducer(state, action) {
       return { ...state, showMessageMenu: action.payload };
     case "UI":
       return { ...state, ui: { ...state.ui, ...action.payload } };
+    case "SET_LIGHTBOX_IMAGE":
+      return { ...state, lightboxImage: action.payload };
+    case "RECEIVE_MESSAGE": {
+      const msg = action.payload;
+      const isForSelected = state.selectedConversation?.conversation_id === msg.conversation_id;
+      
+      // 1. Update messages list if it's the active conversation
+      let updatedMessages = state.messages;
+      if (isForSelected) {
+        const exists = state.messages.some(m => m.message_id === msg.message_id);
+        if (!exists) {
+          updatedMessages = [...state.messages, msg];
+        }
+      }
+
+      // 2. Update conversation list preview and order
+      const updatedConversations = state.conversations.map(c => {
+        if (c.conversation_id === msg.conversation_id) {
+          return {
+            ...c,
+            last_message_text: msg.message_text,
+            last_message_type: msg.message_type,
+            last_message_time: msg.created_at,
+            unread_count: isForSelected ? 0 : (parseInt(c.unread_count || 0) + 1)
+          };
+        }
+        return c;
+      });
+
+      // Sort conversations: move updated one to top
+      const targetIdx = updatedConversations.findIndex(c => c.conversation_id === msg.conversation_id);
+      if (targetIdx > 0) {
+        const [target] = updatedConversations.splice(targetIdx, 1);
+        updatedConversations.unshift(target);
+      }
+
+      return { 
+        ...state, 
+        messages: updatedMessages, 
+        conversations: updatedConversations 
+      };
+    }
     default:
       return state;
   }
@@ -116,6 +167,21 @@ function reducer(state, action) {
 export default function ChatLayout() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const activeConv = useRef(null);
+  const token = localStorage.getItem("token");
+
+  const { joinConversation, markRead } = useChatSocket(
+    token,
+    (msg) => {
+      if (msg.type === 'NEW_CONVERSATION') {
+        loadConversations();
+        return;
+      }
+      dispatch({ type: "RECEIVE_MESSAGE", payload: msg });
+      if (state.selectedConversation?.conversation_id === msg.conversation_id) {
+        markRead(msg.conversation_id);
+      }
+    }
+  );
 
   async function loadConversations(extra = {}) {
     try {
@@ -308,6 +374,7 @@ export default function ChatLayout() {
         onSelect={(c) => {
           dispatch({ type: "SELECT_CONVERSATION", payload: c });
           loadMessages(c);
+          joinConversation(c.conversation_id);
         }}
         onNewChat={() => dispatch({ type: "UI", payload: { newChat: true } })}
         onSearch={(value) => dispatch({ type: "SET_SEARCH_CHAT", payload: value })}
@@ -323,6 +390,7 @@ export default function ChatLayout() {
         sending={state.sending}
         fileUploading={state.fileUploading}
         showMessageMenu={state.showMessageMenu}
+        isNewConversation={state.isNewConversation}
         onSearch={(res) => dispatch({ type: "FILTER_MESSAGES", payload: res })}
         onClearSearch={() => dispatch({ type: "FILTER_MESSAGES", payload: null })}
         onInfo={handleLoadParticipants}
@@ -355,9 +423,14 @@ export default function ChatLayout() {
             const fileInfo = uploadRes?.resources?.file;
             if (!fileInfo?.url) return null;
 
+            const isImg = (file) => {
+              const ext = file.name.split('.').pop().toLowerCase();
+              return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'].includes(ext);
+            };
+
             const res = await sendMessage(state.selectedConversation.conversation_id, {
               messageText: fileInfo.name || file.name,
-              messageType: "document",
+              messageType: isImg(file) ? "image" : "document",
               fileUrl: fileInfo.url,
               fileName: fileInfo.name,
               fileSize: fileInfo.size,
@@ -377,7 +450,29 @@ export default function ChatLayout() {
         }}
         onShowMessageMenu={(messageId) => dispatch({ type: "SHOW_MESSAGE_MENU", payload: messageId })}
         onDeleteMessage={handleSoftDelete}
+        onImageClick={(url) => dispatch({ type: "SET_LIGHTBOX_IMAGE", payload: url })}
       />
+
+      {state.lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-10"
+          onClick={() => dispatch({ type: "SET_LIGHTBOX_IMAGE", payload: null })}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+            onClick={() => dispatch({ type: "SET_LIGHTBOX_IMAGE", payload: null })}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img 
+            src={state.lightboxImage} 
+            alt="Full size preview" 
+            className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
+          />
+        </div>
+      )}
 
       {state.ui.info && (
         <ChatInfoModal

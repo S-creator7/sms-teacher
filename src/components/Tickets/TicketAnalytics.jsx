@@ -47,12 +47,12 @@ const getCategoryColor = (index) => {
 const AnalyticsChart = ({ title, data, type = 'bar', colors }) => {
     if (type === 'pie') {
         return (
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 w-full min-w-0">
                 <h3 className="text-lg font-semibold text-gray-800 mb-6">
                     {title}
                 </h3>
-                <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[300px] w-full relative">
+                    <ResponsiveContainer width="100%" height="300" minWidth={0} minHeight={0} debounce={50}>
                         <PieChart>
                             <Pie
                                 data={data}
@@ -78,12 +78,12 @@ const AnalyticsChart = ({ title, data, type = 'bar', colors }) => {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+        <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 w-full min-w-0">
             <h3 className="text-lg font-semibold text-gray-800 mb-6">
                 {title}
             </h3>
-            <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[300px] w-full relative">
+                <ResponsiveContainer width="100%" height="300" minWidth={0} minHeight={0} debounce={50}>
                     <BarChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                         <XAxis dataKey="status" />
