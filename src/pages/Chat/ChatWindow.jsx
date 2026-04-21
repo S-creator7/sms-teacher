@@ -23,6 +23,7 @@ export default function ChatWindow({
   sending,
   fileUploading,
   showMessageMenu,
+
   onSearch, 
   onClearSearch, 
   onInfo, 
@@ -30,7 +31,8 @@ export default function ChatWindow({
   onSendMessage,
   onFileUpload,
   onShowMessageMenu,
-  onDeleteMessage
+  onDeleteMessage,
+  onImageClick
 }) {
   const [q, setQ] = useState("");
   const [searchInConversation, setSearchInConversation] = useState("");
@@ -141,9 +143,11 @@ export default function ChatWindow({
         messages={messages} 
         loadingMessages={loadingMessages}
         showMessageMenu={showMessageMenu}
+
         onForward={onForward}
         onShowMessageMenu={onShowMessageMenu}
         onDeleteMessage={onDeleteMessage}
+        onImageClick={onImageClick}
       />
       <Composer 
         conversation={conversation}
