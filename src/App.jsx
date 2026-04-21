@@ -36,6 +36,7 @@ import TicketDetails from "./pages/Tickets/TicketDetails";
 import TicketAnalytics from "./components/Tickets/TicketAnalytics";
 import Events from "./pages/Events";
 import Certificates from "./pages/Certificates";
+import Transport from "./pages/Transport";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -329,6 +330,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Certificates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/transport/*"
+                element={
+                  <ProtectedRoute>
+                    <Transport />
                   </ProtectedRoute>
                 }
               />

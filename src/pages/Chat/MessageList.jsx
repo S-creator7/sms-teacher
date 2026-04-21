@@ -7,8 +7,9 @@ function formatDate(ts) {
   return d.toLocaleDateString();
 }
 
-export default function MessageList({ messages, loadingMessages, showMessageMenu, onForward, onShowMessageMenu, onDeleteMessage }) {
+export default function MessageList({ messages, loadingMessages, showMessageMenu, onForward, onShowMessageMenu, onDeleteMessage, onImageClick }) {
   const endRef = useRef(null);
+  const containerRef = useRef(null);
 
   const groupedMessages = useMemo(() => {
     const groups = [];
@@ -25,11 +26,28 @@ export default function MessageList({ messages, loadingMessages, showMessageMenu
   }, [messages]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    console.log('MessageList useEffect triggered, messages length:', messages.length);
+    if (messages.length > 0) {
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        console.log('Attempting to scroll to bottom');
+        // Try multiple scroll methods
+        if (endRef.current) {
+          console.log('Using scrollIntoView');
+          endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+        // Also try scrolling the container directly
+        if (containerRef.current) {
+          console.log('Using scrollTop, container height:', containerRef.current.scrollHeight);
+          containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
   }, [messages]);
 
   return (
     <div
+      ref={containerRef}
       className="flex-1 overflow-y-auto px-6 py-2 bg-[#e5ddd5] bg-opacity-70 min-h-0"
       onClick={() => onShowMessageMenu(null)}
     >
@@ -59,6 +77,7 @@ export default function MessageList({ messages, loadingMessages, showMessageMenu
               onShowMessageMenu={onShowMessageMenu}
               onDeleteMessage={onDeleteMessage}
               showMessageMenu={showMessageMenu}
+              onImageClick={onImageClick}
             />
           );
         })}

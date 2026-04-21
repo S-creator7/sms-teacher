@@ -14,7 +14,8 @@ import {
   LuChevronDown,
   LuChevronUp,
   LuTrophy,
-  LuCalendarDays
+  LuCalendarDays,
+  LuBus
 } from "react-icons/lu";
 
 const navGroups = [
@@ -52,6 +53,20 @@ const navGroups = [
       { label: "Leave", to: "/leave", icon: LuFileText },
       { label: "POSH", to: "/posh", icon: LuShieldCheck },
       { label: "Chat", to: "/chat", icon: LuMessageCircle },
+    ],
+  },
+  {
+    title: "Transport",
+    items: [
+      {
+        label: "Transport",
+        icon: LuBus,
+        subItems: [
+          { label: "Students Tracking", to: "/transport/students" },
+          { label: "Live Tracking",     to: "/transport/live" },
+          { label: "History",           to: "/transport/history" },
+        ],
+      },
     ],
   },
   {
