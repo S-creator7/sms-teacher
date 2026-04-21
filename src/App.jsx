@@ -29,10 +29,13 @@ import Activities from "./pages/Activities";
 import Homework from "./pages/Homework";
 import MyAttendance from "./pages/MyAttendance";
 import Chat from "./pages/Chat";
+import ChatLayout from "./pages/Chat/ChatLayout";
 import TicketList from "./pages/Tickets/TicketList";
 import TicketCreate from "./pages/Tickets/TicketCreate";
 import TicketDetails from "./pages/Tickets/TicketDetails";
 import TicketAnalytics from "./components/Tickets/TicketAnalytics";
+import Events from "./pages/Events";
+import Certificates from "./pages/Certificates";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -267,7 +270,7 @@ function AppContent() {
                 path="/chat"
                 element={
                   <ProtectedRoute>
-                    <Chat />
+                    <ChatLayout />
                   </ProtectedRoute>
                 }
               />
@@ -310,6 +313,22 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <TicketAnalytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/events"
+                element={
+                  <ProtectedRoute>
+                    <Events />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/certificates"
+                element={
+                  <ProtectedRoute>
+                    <Certificates />
                   </ProtectedRoute>
                 }
               />

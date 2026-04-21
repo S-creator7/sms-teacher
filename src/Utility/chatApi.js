@@ -45,16 +45,51 @@ export async function sendMessage(conversationId, body) {
 }
 
 export async function uploadChatFile(file) {
+  // Check file size (max 10MB)
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    throw new Error("File size exceeds 10MB limit");
+  }
+
+  // Check file type
+  const allowedTypes = [
+    "image/jpeg",
+    "image/heic",
+    "image/heif",
+    "image/png",
+    "image/gif",
+    "image/tiff",
+    "application/pdf",
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "application/vnd.oasis.opendocument.text"
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(`File type ${file.type} is not supported. Please upload images or documents.`);
+  }
+
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await axios.post(`${API_ENDPOINT}/v1/teacher/chat/upload-file`, formData, {
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
+  try {
+    const response = await axios.post(`${API_ENDPOINT}/v1/teacher/chat/upload-file`, formData, {
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 400) {
+      const errorMessage = error.response?.data?.message || "Invalid file format or size";
+      throw new Error(errorMessage);
+    }
+    throw error;
+  }
 }
 
 export async function markConversationRead(conversationId) {

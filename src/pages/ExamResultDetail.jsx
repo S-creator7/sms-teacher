@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { getSchedulerResults } from "../Utility/examApi";
+import { useParams, Link, useLocation } from "react-router-dom";
+import { getSchedulerResults, getTeacherExams } from "../Utility/examApi";
 
 function pct(marks, max) {
   if (!max || max <= 0 || marks == null) return null;
@@ -9,6 +9,8 @@ function pct(marks, max) {
 
 export default function ExamResultDetail() {
   const { schedulerId } = useParams();
+  const location = useLocation();
+  const passed = (location?.state || {});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [meta, setMeta] = useState({});
@@ -30,16 +32,60 @@ export default function ExamResultDetail() {
       const res = await getSchedulerResults(schedulerId);
       const list = Array.isArray(res?.resources?.data) ? res.resources.data : [];
       const first = list[0] || {};
-      setMeta({
-        subject_id: first.subject_id,
-        subject_name: first.subject_name,
-        exam_name: first.exam_name,
-        class_name: first.class_name,
-        section_name: first.section_name,
-        total_marks: first.total_marks,
-        pass_marks: first.pass_marks,
-        exam_date: first.exam_date,
-      });
+
+      // NOTE: teacher scheduler results API doesn't include exam_name/class_name/section_name.
+      // Prefer anything that might come from API, then from route state, then from teacher exams list lookup.
+      let nextMeta = {
+        subject_id: first.subject_id || passed?.subject_id,
+        subject_name: first.subject_name || passed?.subject_name,
+        exam_name: first.exam_name || passed?.exam_name,
+        class_name: first.class_name || passed?.class_name,
+        section_name: first.section_name || passed?.section_name,
+        total_marks: first.total_marks || passed?.total_marks,
+        pass_marks: first.pass_marks || passed?.pass_marks,
+        exam_date: first.exam_date || passed?.exam_date,
+      };
+
+      // Fallback: lookup scheduler in teacher past exams to get exam_name/subject/class/section
+      if (!nextMeta.exam_name || !nextMeta.subject_name || !nextMeta.class_name || !nextMeta.section_name) {
+        try {
+          const exLimit = 100;
+          let page = 1;
+          let totalPages = 1;
+          let found;
+          do {
+            const ex = await getTeacherExams({ filter: "past", page, limit: exLimit });
+            const exams = Array.isArray(ex?.resources?.data?.exams) ? ex.resources.data.exams : [];
+            for (const e of exams) {
+              if (String(e.scheduler_id) === String(schedulerId)) {
+                found = e;
+                break;
+              }
+            }
+            const pg = ex?.resources?.data?.pagination;
+            totalPages = Math.max(1, Number(pg?.total_pages || 1));
+            page += 1;
+          } while (!found && page <= totalPages && page <= 5);
+
+          if (found) {
+            nextMeta = {
+              ...nextMeta,
+              exam_name: nextMeta.exam_name || found.exam_name,
+              subject_name: nextMeta.subject_name || found.subject_name,
+              class_name: nextMeta.class_name || found.class_name,
+              section_name: nextMeta.section_name || found.section_name,
+              total_marks: nextMeta.total_marks || found.total_marks,
+              pass_marks: nextMeta.pass_marks || found.pass_marks,
+              exam_date: nextMeta.exam_date || found.exam_date,
+              subject_id: nextMeta.subject_id || found.subject_id,
+            };
+          }
+        } catch (_) {
+          // ignore
+        }
+      }
+
+      setMeta(nextMeta);
 
       setRows(
         list.map((s) => ({
@@ -66,14 +112,19 @@ export default function ExamResultDetail() {
   return (
     <div className="p-3 sm:p-4 md:p-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{meta.exam_name} • {meta.subject_name}</h1>
-            <p className="text-xs text-gray-600">{meta.class_name} • Sec {meta.section_name} • Max {meta.total_marks ?? '-'}</p>
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
+              {meta.exam_name || "Exam"} • {meta.subject_name || "-"}
+            </h1>
+            <p className="text-xs text-gray-600 mt-1">
+              {(meta.class_name || "-")}{" "}• Sec {(meta.section_name || "-")}{" "}• Max {meta.total_marks ?? "-"}
+              {meta.exam_date ? ` • ${meta.exam_date}` : ""}
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:shrink-0">
             <Link to="/results" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm">Back to Results</Link>
-            <Link to={`/exams/${schedulerId}/entry`} className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-sm">Enter/Update Results</Link>
+            <Link to={`/exams/${schedulerId}/entry`} className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-sm">Enter Results</Link>
           </div>
         </div>
 
@@ -82,13 +133,16 @@ export default function ExamResultDetail() {
             <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
           )}
 
-          <div className="mb-3">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <input
               placeholder="Search student or roll no"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-72"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-72"
             />
+            <div className="text-xs text-gray-500 sm:text-right">
+              {loading ? "Loading..." : `${filtered.length} student(s)`}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
