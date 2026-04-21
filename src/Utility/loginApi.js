@@ -38,3 +38,19 @@ export async function ForgotPassword(body) {
   );
   return response.data;
 }
+
+
+export async function TeacherLogoutApi() {
+  const response = await axios.post(
+    `${API_ENDPOINT}/v1/teacher/logout`,
+    {},
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(), // attaches Bearer token
+      },
+    }
+  );
+
+  return response.data;
+}

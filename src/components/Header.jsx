@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaBars, FaUserCircle, FaUser, FaSignOutAlt } from "react-icons/fa";
 import { UserContext } from "./Provider";
+import { TeacherLogoutApi } from "../Utility/loginApi";
 
 export default function Header({ toggleSidebar }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -20,15 +21,39 @@ export default function Header({ toggleSidebar }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
+  // const handleLogout = () => {
+  //   setLoading(true);
+  //   setTimeout(() => {
+  //     localStorage.removeItem("token");
+  //     localStorage.removeItem("user");
+  //     navigate("/");
+  //     setLoading(false);
+  //   }, 500);
+  // };
+
+  const handleLogout = async () => {
     setLoading(true);
-    setTimeout(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      navigate("/");
+
+    try {
+      const res = await TeacherLogoutApi();
+
+      if (res?.status) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Teacher logout failed:", error);
+      toast.error(
+        error?.response?.data?.message || "Unable to logout. Please try again."
+      );
+      // ❌ DO NOT clear local storage on failure
+    } finally {
       setLoading(false);
-    }, 500);
+      setShowDropdown(false);
+    }
   };
+
 
   const isUserProfilePage = location.pathname.startsWith("/user-profile");
 
