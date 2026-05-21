@@ -28,6 +28,8 @@ import Assignments from "./pages/Assignments";
 import Activities from "./pages/Activities";
 import Homework from "./pages/Homework";
 import MyAttendance from "./pages/MyAttendance";
+import OnlineMeetings from "./pages/OnlineMeetings";
+import StaffMeetings from "./pages/StaffMeetings";
 import Chat from "./pages/Chat";
 import ChatLayout from "./pages/Chat/ChatLayout";
 import TicketList from "./pages/Tickets/TicketList";
@@ -200,6 +202,22 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Assignments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/online-meetings"
+                element={
+                  <ProtectedRoute>
+                    <OnlineMeetings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/staff-meetings"
+                element={
+                  <ProtectedRoute>
+                    <StaffMeetings />
                   </ProtectedRoute>
                 }
               />

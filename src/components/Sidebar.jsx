@@ -15,7 +15,8 @@ import {
   LuChevronUp,
   LuTrophy,
   LuCalendarDays,
-  LuBus
+  LuBus,
+  LuVideo
 } from "react-icons/lu";
 
 const navGroups = [
@@ -32,6 +33,14 @@ const navGroups = [
     title: "Academic",
     items: [
       { label: "Curriculum", to: "/curriculum", icon: LuBookOpen },
+      {
+        label: "Meetings",
+        icon: LuVideo,
+        subItems: [
+          { label: "Classroom Meetings", to: "/online-meetings" },
+          { label: "Staff Meetings", to: "/staff-meetings" }
+        ]
+      },
       { label: "Exams", to: "/exams", icon: LuGraduationCap },
       { label: "Homework", to: "/homework", icon: LuFileText },
       { label: "Assignments", to: "/assignments", icon: LuFileText },
