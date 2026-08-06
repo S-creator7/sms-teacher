@@ -19,7 +19,7 @@ const CustomInput = ({
   onChange,
 }) => {
   const baseClass =
-    "w-full px-5 py-2 border rounded-lg focus:outline-none focus:border-transparent focus:ring-2 focus:ring-blue-400";
+    "w-full px-5 py-2 border rounded-lg focus:outline-none focus:border-transparent focus:ring-2 focus:ring-[#f86730]";
 
   const registerProps = register && name ? register(name) : {};
 
@@ -65,7 +65,7 @@ const CustomInput = ({
           type="file"
           {...commonProps}
           accept={accept}
-          className="w-full border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+          className="w-full border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-[#f86730] hover:file:bg-orange-200 cursor-pointer"
         />
       ) : (
         <input type={type} {...commonProps} />

@@ -16,11 +16,11 @@ export default function Exams() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
-  const [classOptions, setClassOptions] = useState([]); 
-  const [sectionOptions, setSectionOptions] = useState([]); 
+  const [classOptions, setClassOptions] = useState([]);
+  const [sectionOptions, setSectionOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
-  const [selectedClassroom, setSelectedClassroom] = useState(""); 
-  const [range, setRange] = useState("upcoming"); 
+  const [selectedClassroom, setSelectedClassroom] = useState("");
+  const [range, setRange] = useState("upcoming");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0, limit });
@@ -137,14 +137,14 @@ export default function Exams() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Exams</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">Exams</h1>
             <p className="text-xs text-gray-600">All scheduled exams assigned to you</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#f86730] focus:border-[#f86730] outline-none"
             >
               <option value="">All Classes</option>
               {classOptions.map((o) => (
@@ -174,9 +174,9 @@ export default function Exams() {
               placeholder="Search exam, subject, class"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64 focus:ring-1 focus:ring-[#f86730] focus:border-[#f86730] outline-none"
             />
-            <button onClick={() => { setPage(1); load(1); }} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm" disabled={loading}>
+            <button onClick={() => { setPage(1); load(1); }} className="px-4 py-2 rounded-lg bg-[#f86730] hover:bg-[#e55a29] text-white text-sm font-medium transition-all duration-200 shadow-sm" disabled={loading}>
               Refresh
             </button>
           </div>
@@ -189,7 +189,7 @@ export default function Exams() {
 
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-700">
+              <thead className="bg-[#0F172A]/5 text-[#0F172A]">
                 <tr>
                   <th className="text-left px-3 py-2">Exam</th>
                   <th className="text-left px-3 py-2">Subject</th>
@@ -204,23 +204,23 @@ export default function Exams() {
                 {loading ? (
                   [...Array(8)].map((_, i) => (
                     <tr key={i} className="animate-pulse odd:bg-white even:bg-gray-50">
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
-                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded"/></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
+                      <td className="px-3 py-3"><div className="h-4 bg-gray-100 rounded" /></td>
                     </tr>
                   ))
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-6 text-center text-gray-500">No exams found</td>
+                    <td colSpan={7} className="px-3 py-8 text-center text-gray-500 text-sm">No exams found</td>
                   </tr>
                 ) : (
                   filtered.map((e) => (
-                    <tr key={e.scheduler_id} className="hover:bg-gray-50 odd:bg-white even:bg-gray-50">
-                      <td className="px-3 py-2 font-medium">{e.exam_name}</td>
+                    <tr key={e.scheduler_id} className="hover:bg-[#f86730]/5 odd:bg-white even:bg-gray-50 transition-colors">
+                      <td className="px-3 py-2 font-semibold text-[#0F172A]">{e.exam_name}</td>
                       <td className="px-3 py-2">{e.subject_name}</td>
                       <td className="px-3 py-2">{e.class_name} • {e.section_name}</td>
                       <td className="px-3 py-2">{formatDate(e.exam_date)}</td>
@@ -230,14 +230,14 @@ export default function Exams() {
                         <div className="flex gap-2">
                           {range === 'past' && (
                             <>
-                              <Link to={`/results/${e.scheduler_id}`} className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-xs">
+                              <Link to={`/results/${e.scheduler_id}`} className="px-3 py-2 rounded-lg border border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white text-xs font-medium transition-all">
                                 View Results
                               </Link>
                               {(() => {
                                 const hasResults = schedWithResults.has(Number(e.scheduler_id));
                                 const baseCls = hasResults
-                                  ? 'bg-red-600 hover:bg-red-700 border-red-600'
-                                  : 'bg-blue-600 hover:bg-blue-700 border-blue-600';
+                                  ? 'bg-green-600 hover:bg-green-700 border-green-600'
+                                  : 'bg-[#f86730] hover:bg-[#e55a29] border-[#f86730]';
                                 return (
                                   <button
                                     type="button"
@@ -246,7 +246,7 @@ export default function Exams() {
                                         state: { scheduler_id: e.scheduler_id, exam_id: e.exam_id, subject_id: e.subject_id, classroom_id: e.classroom_id }
                                       });
                                     }}
-                                    className={`px-2.5 py-1.5 rounded-lg text-white border text-xs ${baseCls}`}
+                                   className={`w-40 h-9 rounded-lg text-white border text-sm font-medium transition-all duration-200 flex items-center justify-center whitespace-nowrap ${baseCls}`}
                                   >
                                     {hasResults ? 'Marks Assigned' : 'Assign Marks'}
                                   </button>
@@ -266,7 +266,7 @@ export default function Exams() {
             <div className="text-gray-600">Page {pagination.page} of {pagination.total_pages} • Total {pagination.total}</div>
             <div className="flex gap-2">
               <button
-                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
+                className="px-4 py-2 rounded-lg border border-[#f86730] text-[#f86730] hover:bg-[#f86730] hover:text-white text-sm font-medium transition-all disabled:opacity-50"
                 disabled={loading || pagination.page <= 1}
                 onClick={() => { const p = pagination.page - 1; setPage(p); load(p); }}
               >

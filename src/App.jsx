@@ -86,23 +86,22 @@ function AppContent() {
         <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       )}
 
-      <div className="flex flex-1 w-full relative min-h-[calc(100vh-64px)]">
+      <div className="flex w-full relative">
         {!hideSidebar && (
           <Sidebar
             isSidebarOpen={isSidebarOpen}
             isMobile={isMobile}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            closeSidebar={() => setIsSidebarOpen(false)}
           />
         )}
 
         <main
-          className={`flex-grow transition-all duration-300 ${!hideSidebar ? 'pt-16' : ''}`}
+          className={`grow transition-all duration-300 min-w-0 ${!hideSidebar ? 'pt-14' : ''}`}
           style={{
-            width: !hideSidebar && isSidebarOpen && !isMobile
-              ? 'calc(100% - 256px)'
-              : '100%',
-            marginLeft: 'auto',
-            minHeight: 'calc(100vh - 64px)',
+            marginLeft: isMobile ? 0 : (!isSidebarOpen ? 0 : 256),
+            width: isMobile ? '100%' : (!isSidebarOpen ? '100%' : 'calc(100% - 256px)'),
+            minHeight: 'calc(100vh - 56px)',
           }}
         >
           <div className={isChat ? "p-0 h-full" : "p-0"}>

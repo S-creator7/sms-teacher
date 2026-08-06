@@ -54,11 +54,19 @@ export default function MyAttendanceHistory() {
           <label className="text-xs font-medium text-gray-700 mb-1 block">End Date</label>
           <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm w-full focus:ring-2 focus:ring-blue-500" />
         </div>
-        <div>
-          <button onClick={onFetch} disabled={loading || !fromDate || !toDate} className={`w-full px-4 py-2.5 rounded-lg text-sm font-semibold shadow border transition-colors ${loading || !fromDate || !toDate ? "bg-gray-300 text-gray-700" : "bg-gray-900 text-white hover:bg-black"}`}>
-            {loading ? "Loading..." : "Fetch"}
-          </button>
-        </div>
+      <div>
+  <button
+    onClick={onFetch}
+    disabled={loading || !fromDate || !toDate}
+    className={`w-full px-4 py-2.5 rounded-lg text-sm font-semibold shadow border transition-colors ${
+      loading || !fromDate || !toDate
+        ? "bg-gray-300 text-gray-700"
+        : "bg-[#f86730] text-white hover:bg-[#e55a29]"
+    }`}
+  >
+    {loading ? "Loading..." : "Fetch"}
+  </button>
+</div>
       </div>
 
       {error && <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>}

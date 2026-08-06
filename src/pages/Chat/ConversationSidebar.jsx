@@ -1,4 +1,5 @@
 import { FaPaperclip, FaPaperPlane, FaSearch, FaArchive, FaInfoCircle, FaEdit, FaTrash, FaShare, FaCheck, FaCheckDouble, FaEllipsisV, FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 function formatTime(ts) {
   if (!ts) return "";
@@ -27,45 +28,50 @@ export default function ConversationSidebar({
   onArchive,
   onUnarchive,
 }) {
+  const navigate = useNavigate();
+
   return (
     <div
-      className={`${conversations.length > 0 ? "hidden lg:flex" : "flex"
-        } w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0`}
+      className={`${
+        conversations.length > 0 ? "hidden lg:flex" : "flex"
+      } w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0`}
     >
-      <div className="bg-[#f7f9fc] px-5 py-2.5 border-b border-gray-200 flex items-center justify-between">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-400 flex items-center justify-center text-white font-semibold text-xs">
+          <div className="w-8 h-8 rounded-full bg-[#f86730] flex items-center justify-center text-white font-semibold text-xs">
             T
           </div>
-          <div className="font-semibold text-base text-gray-800">Chats</div>
+          <div className="font-semibold text-sm text-gray-800">Chats</div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-orange-400 text-white px-2.5 py-1 rounded-full text-xs flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <div className="bg-[#f86730]/10 text-[#f86730] px-2.5 py-1 rounded-full text-[10px] font-medium flex items-center gap-2">
             <span>Unread: {unread}</span>
             {unreadSubscription?.subscribed && (
-              <span className="w-2 h-2 bg-white rounded-full"></span>
+              <span className="w-1.5 h-1.5 bg-[#f86730] rounded-full animate-pulse"></span>
             )}
           </div>
           <button
             onClick={onNewChat}
-            className="w-9 h-9 bg-blue-400 hover:bg-blue-500 text-white rounded-full flex items-center justify-center transition-colors"
+            className="w-8 h-8 bg-[#f86730] hover:bg-[#e55a29] text-white rounded-lg flex items-center justify-center transition-colors"
           >
-            <FaEdit size={18} />
+            <FaEdit size={14} />
           </button>
         </div>
       </div>
 
-      <div className="bg-[#f7f9fc] px-4 py-2 border-b border-gray-200">
+      {/* Search & Filters */}
+      <div className="px-4 py-3 border-b border-gray-100">
         <div className="relative">
-          <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
           <input
             value={searchChat}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full bg-white text-xs pl-12 pr-4 py-2.5 rounded-2xl outline-none border border-gray-200 focus:border-blue-400"
+            className="w-full bg-gray-50 text-sm pl-9 pr-3 py-1.5 rounded-lg outline-none border border-gray-200 focus:border-[#f86730] focus:ring-2 focus:ring-[#f86730]/20 transition"
           />
         </div>
-        <div className="flex mt-2.5 space-x-2">
+        <div className="flex mt-2 gap-1.5">
           {[
             { key: "active", label: "Active" },
             { key: "archived", label: "Archived" },
@@ -75,10 +81,11 @@ export default function ConversationSidebar({
               key={tab.key}
               type="button"
               onClick={() => onStatusChange(tab.key)}
-              className={`flex-1 px-3.5 py-1.5 text-xs rounded-xl transition-colors ${conversationStatus === tab.key
-                ? "bg-blue-400 text-white shadow-sm"
-                : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-                }`}
+              className={`flex-1 px-3 py-1 text-xs rounded-lg transition-colors ${
+                conversationStatus === tab.key
+                  ? "bg-[#f86730] text-white shadow-sm"
+                  : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+              }`}
             >
               {tab.label}
             </button>
@@ -86,12 +93,19 @@ export default function ConversationSidebar({
         </div>
       </div>
 
+      {/* Conversation List */}
       <div className="flex-1 overflow-y-auto bg-white min-h-0">
         {loadingConversations && (
-          <div className="p-3 text-center text-gray-500 text-xs">Loading conversations...</div>
+          <div className="p-6 text-center">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-[#f86730] border-t-transparent"></div>
+            <p className="mt-2 text-xs text-gray-500">Loading conversations...</p>
+          </div>
         )}
         {!loadingConversations && conversations.length === 0 && (
-          <div className="p-3 text-center text-gray-500 text-xs">No conversations found</div>
+          <div className="p-6 text-center">
+            <div className="text-gray-300 text-3xl mb-2">💬</div>
+            <p className="text-xs text-gray-500">No conversations found</p>
+          </div>
         )}
         {!loadingConversations &&
           conversations.map((conv) => {
@@ -102,30 +116,33 @@ export default function ConversationSidebar({
               <div
                 key={conv.conversation_id}
                 onClick={() => onSelect(conv)}
-                className={`px-5 py-3.5 flex items-center gap-3 cursor-pointer border-b border-gray-100 transition-colors ${isSelected ? "bg-blue-50 border-l-4 border-l-blue-300" : "hover:bg-gray-50"
-                  }`}
+                className={`px-4 py-3 flex items-center gap-3 cursor-pointer border-b border-gray-50 transition-colors ${
+                  isSelected 
+                    ? "bg-[#f86730]/5 border-l-4 border-l-[#f86730]" 
+                    : "hover:bg-gray-50/80"
+                }`}
               >
-                <div className="w-9 h-9 rounded-full bg-orange-300 flex items-center justify-center text-xs font-semibold text-white">
+                <div className="w-9 h-9 rounded-full bg-[#f86730]/10 flex items-center justify-center text-xs font-semibold text-[#f86730]">
                   {`${conv.parent_first_name || ""} ${conv.parent_last_name || ""}`.trim()[0]?.toUpperCase() ||
                     "P"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-0.5">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-sm text-gray-800 truncate">
                       {`${conv.parent_first_name || ""} ${conv.parent_last_name || ""}`.trim()}
                     </div>
-                    <div className="text-[10px] text-gray-500 whitespace-nowrap">
+                    <div className="text-[10px] text-gray-400 whitespace-nowrap">
                       {formatTime(conv.last_message_at || conv.created_at)}
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <div className="text-xs text-gray-600 truncate">
+                    <div className="text-xs text-gray-500 truncate">
                       {`${conv.student_first_name || ""} ${conv.student_last_name || ""}`.trim()}
                       {conv.subject_name ? ` • ${conv.subject_name}` : ""}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {conv.unread_count > 0 && (
-                        <span className="min-w-[22px] h-5 text-center rounded-full bg-orange-400 text-white text-[10px] flex items-center justify-center">
+                        <span className="min-w-[20px] h-5 text-center rounded-full bg-[#f86730] text-white text-[10px] font-medium flex items-center justify-center px-1.5">
                           {conv.unread_count}
                         </span>
                       )}
@@ -135,7 +152,7 @@ export default function ConversationSidebar({
                             e.stopPropagation();
                             onArchive(conv);
                           }}
-                          className="text-[11px] px-2 py-1 rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-500 bg-white transition-colors"
+                          className="text-[10px] px-2 py-0.5 rounded-lg border border-gray-200 text-gray-500 hover:border-[#f86730] hover:text-[#f86730] hover:bg-[#f86730]/5 transition"
                         >
                           Archive
                         </button>
@@ -146,7 +163,7 @@ export default function ConversationSidebar({
                             e.stopPropagation();
                             onUnarchive(conv);
                           }}
-                          className="text-[11px] px-2 py-1 rounded-full border border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-500 bg-white transition-colors"
+                          className="text-[10px] px-2 py-0.5 rounded-lg border border-gray-200 text-gray-500 hover:border-[#f86730] hover:text-[#f86730] hover:bg-[#f86730]/5 transition"
                         >
                           Unarchive
                         </button>

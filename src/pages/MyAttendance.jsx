@@ -15,7 +15,7 @@ export default function MyAttendance() {
     <div className="p-4 sm:p-6">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-200">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Attendance</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">My Attendance</h1>
             <p className="text-sm text-gray-600 mt-1">Mark your attendance and review your logs</p>
           </div>
 
@@ -28,7 +28,7 @@ export default function MyAttendance() {
                   onClick={() => setTab(t.key)}
                   className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
                     tab === t.key
-                      ? "bg-gray-600 text-white border-gray-700 shadow"
+                      ? "bg-[#f86730] text-white border-[#f86730]"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >

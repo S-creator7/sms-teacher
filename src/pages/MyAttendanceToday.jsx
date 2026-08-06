@@ -21,8 +21,18 @@ export default function MyAttendanceToday() {
   const isMarked = Boolean(today?.is_attendance_marked);
   const inTime = today?.in_time || null;
   const outTime = today?.out_time || null;
-  const status = today?.status || "-";
-  const approval = today?.approval_status || "-";
+  const status =
+  today?.status && today.status !== "-"
+    ? today.status
+    : isMarked
+    ? "Pending"
+    : "Not Marked";
+  const approval =
+  today?.approval_status && today.approval_status !== "-"
+    ? today.approval_status
+    : isMarked
+    ? "Pending"
+    : "Not Applicable";
 
   async function onToggle() {
     setError("");
@@ -58,8 +68,8 @@ export default function MyAttendanceToday() {
           disabled={busy}
           className={`group inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
             isMarked && !outTime
-              ? "bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-700 hover:to-red-700"
-              : "bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-700 hover:to-green-700"
+              ? "bg-gray-300 text-gray-700"
+        : "bg-[#f86730] text-white hover:bg-[#e55a29]"
           }`}
           title={isMarked && !outTime ? "Logout" : "Login"}
         >

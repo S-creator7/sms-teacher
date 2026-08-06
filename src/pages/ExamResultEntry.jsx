@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { getSchedulerResults, submitBatchResults, getTeacherExams } from "../Utility/examApi";
 import toast from "react-hot-toast";
 import { getStudentList } from "../Utility/dashboardApi";
+import { ArrowLeft } from "lucide-react";
 
 export default function ExamResultEntry() {
   const { schedulerId } = useParams();
@@ -23,6 +24,10 @@ export default function ExamResultEntry() {
     classroom_id: passed?.classroom_id || "",
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
   async function load() {
     try {
       setLoading(true);
@@ -32,7 +37,6 @@ export default function ExamResultEntry() {
       const first = resultList[0] || {};
       let classroom_id = passed?.classroom_id || first.classroom_id || first.classroomId || "";
 
-      // Prefer meta from results; if absent, fallback to passed state; if still absent, lookup from teacher exams
       let nextMeta = {
         exam_name: first.exam_name || passed?.exam_name,
         subject_name: first.subject_name || passed?.subject_name,
@@ -50,7 +54,6 @@ export default function ExamResultEntry() {
         classroom_id: prev.classroom_id || classroom_id || "",
       }));
 
-      // Build a map of existing results by student_id for quick merge
       const existingByStudent = new Map();
       for (const r of resultList) {
         if (r && r.student_id != null) {
@@ -58,7 +61,6 @@ export default function ExamResultEntry() {
         }
       }
 
-      // If we still lack meta or classroom_id (e.g. no results yet and no state), try to find exam by scheduler via teacher exams (paged)
       if ((!nextMeta.class_name || !nextMeta.section_name || !nextMeta.total_marks || !classroom_id)) {
         try {
           const exLimit = 100; let page = 1; let totalPages = 1; let found;
@@ -87,7 +89,6 @@ export default function ExamResultEntry() {
 
       setMeta(nextMeta);
 
-      // Fetch complete classroom student list so all students appear even if no results exist yet
       let students = [];
       if (classroom_id) {
         try {
@@ -99,14 +100,12 @@ export default function ExamResultEntry() {
             student_name: `${s.first_name || ""} ${s.last_name || ""}`.trim(),
           }));
         } catch (_) {
-          // fallback: if students can't be loaded, at least show those present in results
           students = resultList
             .filter((s) => s.student_id != null)
             .map((s) => ({ student_id: s.student_id, roll_no: s.roll_number, student_name: s.student_name }));
         }
       }
 
-      // Merge students with existing results (so empty rows appear)
       const merged = students.map((stu) => {
         const ex = existingByStudent.get(String(stu.student_id));
         return {
@@ -119,6 +118,7 @@ export default function ExamResultEntry() {
         };
       });
       setRows(merged);
+      setCurrentPage(1); // Reset to first page when data loads
     } catch (e) {
       setError(e?.response?.data?.message || e.message || "Failed to load students");
     } finally {
@@ -141,12 +141,11 @@ export default function ExamResultEntry() {
         toast.error("Mark update is not available. Only new results can be submitted.");
       }
 
-      // Client validation for marks
       const max = Number(meta.total_marks) || undefined;
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
         if (r.result_id != null) continue;
-        if (r.marks_obtained === "" || r.marks_obtained === null || r.marks_obtained === undefined) continue; // allow empty -> will be treated as 0 below
+        if (r.marks_obtained === "" || r.marks_obtained === null || r.marks_obtained === undefined) continue;
         const val = Number(r.marks_obtained);
         if (Number.isNaN(val)) {
           toast.error(`Row ${i + 1}: Marks must be a number`);
@@ -161,6 +160,18 @@ export default function ExamResultEntry() {
           return;
         }
       }
+      const emptyMarks = rows.filter(
+  r =>
+    r.result_id == null &&
+    (r.marks_obtained === "" ||
+      r.marks_obtained === null ||
+      r.marks_obtained === undefined)
+);
+
+if (emptyMarks.length > 0) {
+  toast.error("Marks are required for all students.");
+  return;
+}
 
       setSubmitting(true);
       const results = rows
@@ -173,9 +184,9 @@ export default function ExamResultEntry() {
         }));
 
       if (results.length === 0) {
-        toast.error("No new results to submit");
-        return;
-      }
+  toast.error("No changes detected. Please enter marks before saving.");
+  return;
+}
       await submitBatchResults(schedulerId, results);
       toast.success("Results saved successfully");
       navigate(`/results/${schedulerId}`);
@@ -186,91 +197,166 @@ export default function ExamResultEntry() {
     }
   }
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(rows.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRows = rows.slice(startIndex, endIndex);
+
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{meta.exam_name} • {meta.subject_name}</h1>
-            <p className="text-xs text-gray-600">{meta.class_name} • Sec {meta.section_name} • Max {meta.total_marks ?? '-'}</p>
+    <div className="p-2 sm:p-3 md:p-4 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="px-4 py-3 border-b bg-[#0F172A] rounded-t-xl flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBack}
+                className="p-1.5 rounded-md hover:bg-white/10 text-white transition-colors duration-200 group"
+                title="Go Back"
+              >
+                <ArrowLeft size={18} className="group-hover:scale-110 transition-transform duration-200" />
+              </button>
+              <div>
+                <h1 className="text-lg sm:text-xl font-semibold text-white">{meta.exam_name} • {meta.subject_name}</h1>
+                <p className="text-[10px] text-gray-300">{meta.class_name} • Sec {meta.section_name} • Max {meta.total_marks ?? '-'}</p>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <Link 
+                to={`/results/${schedulerId}`} 
+                className="px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs transition-colors duration-200"
+              >
+                View Results
+              </Link>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Link to={`/results/${schedulerId}`} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm">View Results</Link>
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5">
-          {error && (
-            <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
-          )}
+          <form onSubmit={handleSubmit} className="p-3 sm:p-4">
+            {error && (
+              <div className="mb-2 p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800">{error}</div>
+            )}
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-700">
-                <tr>
-                  <th className="text-left px-3 py-2 border-b">#</th>
-                  <th className="text-left px-3 py-2 border-b">Roll No</th>
-                  <th className="text-left px-3 py-2 border-b">Student</th>
-                  <th className="text-left px-3 py-2 border-b">Marks</th>
-                  <th className="text-left px-3 py-2 border-b">Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  [...Array(10)].map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 5 }).map((__, j) => (
-                        <td key={j} className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded"/></td>
-                      ))}
-                    </tr>
-                  ))
-                ) : rows.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs">
+                <thead className="bg-gray-50 text-gray-700">
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-gray-500">No students</td>
+                    <th className="text-left px-2 py-1.5 border-b font-semibold">#</th>
+                    <th className="text-left px-2 py-1.5 border-b font-semibold">Roll No</th>
+                    <th className="text-left px-2 py-1.5 border-b font-semibold">Student</th>
+                    <th className="text-left px-2 py-1.5 border-b font-semibold">Marks</th>
+                    <th className="text-left px-2 py-1.5 border-b font-semibold">Remarks</th>
                   </tr>
-                ) : (
-                  rows.map((r, idx) => (
-                    <tr key={r.student_id || idx} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 border-b">{idx + 1}</td>
-                      <td className="px-3 py-2 border-b">{r.roll_no}</td>
-                      <td className="px-3 py-2 border-b">{r.student_name || '-'}</td>
-                      <td className="px-3 py-2 border-b w-32">
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max={meta.total_marks || undefined}
-                          value={r.marks_obtained}
-                          onChange={(e) => updateRow(idx, "marks_obtained", e.target.value)}
-                          disabled={r.result_id != null}
-                          className="w-28 border border-gray-300 rounded-lg px-2 py-1 text-sm"
-                        />
-                      </td>
-                      <td className="px-3 py-2 border-b">
-                        <input
-                          value={r.remarks}
-                          onChange={(e) => updateRow(idx, "remarks", e.target.value)}
-                          disabled={r.result_id != null}
-                          className="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm"
-                          placeholder="Remarks"
-                        />
-                      </td>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    [...Array(10)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        {Array.from({ length: 5 }).map((__, j) => (
+                          <td key={j} className="px-2 py-2 border-b"><div className="h-3.5 bg-gray-100 rounded"/></td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-2 py-4 text-center text-gray-500 text-xs">No students</td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    currentRows.map((r, idx) => {
+                      const globalIdx = startIndex + idx;
+                      return (
+                        <tr key={r.student_id || idx} className="hover:bg-gray-50/80 transition">
+                          <td className="px-2 py-1.5 border-b text-gray-500">{globalIdx + 1}</td>
+                          <td className="px-2 py-1.5 border-b font-medium text-gray-800">{r.roll_no}</td>
+                          <td className="px-2 py-1.5 border-b text-gray-700">{r.student_name || '-'}</td>
+                          <td className="px-2 py-1.5 border-b w-28">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max={meta.total_marks || undefined}
+                              value={r.marks_obtained}
+                              onChange={(e) => updateRow(globalIdx, "marks_obtained", e.target.value)}
+                              disabled={r.result_id != null}
+                              className="w-24 border border-gray-300 rounded-md px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#f86730] focus:border-transparent transition"
+                            />
+                          </td>
+                          <td className="px-2 py-1.5 border-b">
+                            <input
+                              value={r.remarks}
+                              onChange={(e) => updateRow(globalIdx, "remarks", e.target.value)}
+                              disabled={r.result_id != null}
+                              className="w-full border border-gray-300 rounded-md px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#f86730] focus:border-transparent transition"
+                              placeholder="Remarks"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <button type="button" onClick={load} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm" disabled={loading || submitting}>
-              Reset
-            </button>
-            <button type="submit" className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-sm" disabled={loading || submitting}>
-              {submitting ? "Saving..." : "Save Results"}
-            </button>
-          </div>
-        </form>
+            {/* Pagination Controls */}
+            {!loading && rows.length > itemsPerPage && (
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-gray-100">
+                <div className="text-xs text-gray-500">
+                  Showing {startIndex + 1} to {Math.min(endIndex, rows.length)} of {rows.length} students
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-md border border-gray-200 text-xs bg-white hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 text-xs text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-md border border-gray-200 text-xs bg-white hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Student Count */}
+            {!loading && rows.length > 0 && (
+              <div className="mt-2 text-xs text-gray-400">
+                Total: {rows.length} student{rows.length > 1 ? 's' : ''}
+              </div>
+            )}
+
+            <div className="mt-3 flex flex-col sm:flex-row items-center justify-end gap-1.5">
+              <button 
+                type="button" 
+                onClick={load} 
+                className="px-2.5 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 text-xs transition-colors duration-200 w-full sm:w-auto" 
+                disabled={loading || submitting}
+              >
+                Reset
+              </button>
+              <button 
+                type="submit" 
+                className="px-2.5 py-1.5 rounded-md bg-[#f86730] hover:bg-[#e55a29] text-white border border-[#f86730] text-xs transition-colors duration-200 disabled:opacity-60 w-full sm:w-auto" 
+                disabled={loading || submitting}
+              >
+                {submitting ? "Saving..." : "Save Results"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
