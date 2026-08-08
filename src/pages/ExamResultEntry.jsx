@@ -174,14 +174,19 @@ if (emptyMarks.length > 0) {
 }
 
       setSubmitting(true);
-      const results = rows
-        .filter((r) => r.result_id == null)
-        .filter((r) => !(r.marks_obtained === "" || r.marks_obtained === null || r.marks_obtained === undefined))
-        .map((r) => ({
-          student_id: r.student_id,
-          marks_obtained: Number(r.marks_obtained),
-          remarks: r.remarks || undefined,
-        }));
+     const results = rows
+  .filter((r) => r.result_id == null)
+  .filter(
+    (r) =>
+      r.marks_obtained !== "" &&
+      r.marks_obtained !== null &&
+      r.marks_obtained !== undefined
+  )
+  .map((r) => ({
+    student_id: r.student_id,
+    marks_obtained: Number(r.marks_obtained),
+    remarks: r.remarks || "",
+  }));
 
       if (results.length === 0) {
   toast.error("No changes detected. Please enter marks before saving.");

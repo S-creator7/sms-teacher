@@ -75,17 +75,19 @@ export async function submitSingleResult(scheduler_id, body) {
   });
   return res.data;
 }
-
 export async function submitBatchResults(scheduler_id, results = []) {
   const out = [];
+
   for (const r of results) {
     const payload = {
       student_id: r.student_id,
       marks_obtained: r.marks_obtained,
-      ...(r.remarks ? { remarks: r.remarks } : {}),
+      remarks: r.remarks ?? "",
     };
+
     const res = await submitSingleResult(scheduler_id, payload);
     out.push(res);
   }
+
   return out;
 }

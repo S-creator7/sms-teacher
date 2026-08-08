@@ -91,8 +91,8 @@ export default function Assignments() {
       const data = Array.isArray(res?.resources?.data)
         ? res.resources.data
         : Array.isArray(res?.data)
-        ? res.data
-        : [];
+          ? res.data
+          : [];
       setClasses(data);
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to load classrooms");
@@ -105,8 +105,8 @@ export default function Assignments() {
       const arr = Array.isArray(res?.resources?.data)
         ? res.resources.data
         : Array.isArray(res?.data)
-        ? res.data
-        : [];
+          ? res.data
+          : [];
       setStudents(arr);
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to load students");
@@ -121,8 +121,8 @@ export default function Assignments() {
       const arr = Array.isArray(res?.resources?.data)
         ? res.resources.data
         : Array.isArray(res?.data)
-        ? res.data
-        : [];
+          ? res.data
+          : [];
       setAssignments(arr);
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to load assignments");
@@ -194,7 +194,7 @@ export default function Assignments() {
       const body = {
         assignment_status: nextStatus,
         remark,
-        finish_date: nextStatus === "Finish" ? new Date().toISOString().slice(0, 10) : null,
+        finish_date: nextStatus === "Finish" ? new Date().toISOString() : null,
       };
       await updateStudentAssignmentStatus(student_assignment_id, body);
       toast.success("Status updated");
@@ -234,7 +234,7 @@ export default function Assignments() {
     return assignments.filter((a) => {
       const matchesSearch = q
         ? [a.title, a.description, a.class_name, a.section_name]
-            .some((f) => String(f || "").toLowerCase().includes(q))
+          .some((f) => String(f || "").toLowerCase().includes(q))
         : true;
       const matchesSection = filterClassroomId
         ? String(a.classroom_id) === String(filterClassroomId)
@@ -265,28 +265,26 @@ export default function Assignments() {
       {/* Page Header - Clean, no dark background */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
-        
+
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Assignments</h1>
         </div>
         <div className="flex gap-1.5 bg-white p-0.5 rounded-lg shadow-sm border border-gray-200 w-full sm:w-auto sm:ml-auto">
           <button
             onClick={() => setActiveTab("add")}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex-1 sm:flex-none flex items-center justify-center gap-1.5 ${
-              activeTab === "add" 
-                ? "bg-[#f86730] text-white shadow-sm" 
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex-1 sm:flex-none flex items-center justify-center gap-1.5 ${activeTab === "add"
+              ? "bg-[#f86730] text-white shadow-sm"
+              : "text-gray-600 hover:bg-gray-100"
+              }`}
           >
             <Plus size={14} />
             Add Assignment
           </button>
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex-1 sm:flex-none flex items-center justify-center gap-1.5 ${
-              activeTab === "all" 
-                ? "bg-[#f86730] text-white shadow-sm" 
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex-1 sm:flex-none flex items-center justify-center gap-1.5 ${activeTab === "all"
+              ? "bg-[#f86730] text-white shadow-sm"
+              : "text-gray-600 hover:bg-gray-100"
+              }`}
           >
             <List size={14} />
             All Assignments
@@ -416,9 +414,8 @@ export default function Assignments() {
                       const full = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ");
                       const checked = form.student_ids.includes(String(id)) || form.student_ids.includes(id);
                       return (
-                        <label key={id} className={`flex items-center gap-2 text-xs p-2 rounded border cursor-pointer transition ${
-                          checked ? "bg-[#f86730]/10 border-[#f86730]" : "bg-white border-gray-200 hover:bg-gray-50"
-                        }`}>
+                        <label key={id} className={`flex items-center gap-2 text-xs p-2 rounded border cursor-pointer transition ${checked ? "bg-[#f86730]/10 border-[#f86730]" : "bg-white border-gray-200 hover:bg-gray-50"
+                          }`}>
                           <input
                             type="checkbox"
                             checked={checked}
@@ -462,11 +459,10 @@ export default function Assignments() {
               <button
                 type="submit"
                 disabled={!hasBasicForm || (isStudentSelectionRequired && form.student_ids.length === 0) || submitting}
-                className={`px-4 py-2 rounded-md text-white font-medium transition text-sm order-1 sm:order-2 ${
-                  !hasBasicForm || (isStudentSelectionRequired && form.student_ids.length === 0) || submitting
-                    ? "bg-[#f86730]/60 cursor-not-allowed" 
-                    : "bg-[#f86730] hover:bg-[#e55a29] shadow-sm hover:shadow"
-                }`}
+                className={`px-4 py-2 rounded-md text-white font-medium transition text-sm order-1 sm:order-2 ${!hasBasicForm || (isStudentSelectionRequired && form.student_ids.length === 0) || submitting
+                  ? "bg-[#f86730]/60 cursor-not-allowed"
+                  : "bg-[#f86730] hover:bg-[#e55a29] shadow-sm hover:shadow"
+                  }`}
               >
                 {submitting ? (
                   <span className="flex items-center gap-2">
@@ -493,8 +489,8 @@ export default function Assignments() {
               <div>
                 <h2 className="text-sm font-semibold text-gray-700">All Assignments</h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {filteredAssignments.length > 0 
-                    ? `${filteredAssignments.length} assignments found` 
+                  {filteredAssignments.length > 0
+                    ? `${filteredAssignments.length} assignments found`
                     : "No assignments"}
                 </p>
               </div>
@@ -581,8 +577,11 @@ export default function Assignments() {
                             <CheckCircle size={12} className="text-green-500" />
                             {a.completed_students}/{a.total_students} completed
                           </span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-green-50 text-green-700 border border-green-200">
-                            {a.completion_percentage}%
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border ${a.completion_percentage === 100
+                            ? "bg-green-100 text-green-800 border-green-300"
+                            : "bg-green-50 text-green-700 border-green-200"
+                            }`}>
+                            {a.completion_percentage}% {a.completion_percentage === 100 && "✓ Completed"}
                           </span>
                         </div>
                       </div>
@@ -595,15 +594,23 @@ export default function Assignments() {
                           {isOpen ? "Hide" : "View"}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(a.assignment_id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (a.completion_percentage === 100) {
+                              if (!window.confirm("This assignment is 100% completed. Deleting it will remove all student progress. Are you sure?")) return;
+                            }
+                            handleDelete(a.assignment_id);
+                          }}
                           disabled={deletingId === a.assignment_id}
-                          className={`px-3 py-1.5 rounded-md text-xs border transition ${
-                            deletingId === a.assignment_id 
-                              ? "text-red-300 border-red-200 cursor-not-allowed" 
+                          className={`px-3 py-1.5 rounded-md text-xs border transition ${deletingId === a.assignment_id
+                            ? "text-red-300 border-red-200 cursor-not-allowed"
+                            : a.completion_percentage === 100
+                              ? "text-orange-600 border-orange-300 hover:bg-orange-50"
                               : "text-red-600 border-red-300 hover:bg-red-50"
-                          }`}
+                            }`}
+                          title={a.completion_percentage === 100 ? "Assignment is 100% completed. Deleting will remove all progress." : "Delete assignment"}
                         >
-                          {deletingId === a.assignment_id ? "Deleting..." : "Delete"}
+                          {deletingId === a.assignment_id ? "Deleting..." : a.completion_percentage === 100 ? "Delete (Completed)" : "Delete"}
                         </button>
                       </div>
                     </div>
@@ -628,11 +635,10 @@ export default function Assignments() {
                                   <td className="px-3 py-2">{s.first_name} {s.last_name}</td>
                                   <td className="px-3 py-2">{s.admission_number}</td>
                                   <td className="px-3 py-2">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                      s.assignment_status === "Finish"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-yellow-100 text-yellow-700"
-                                    }`}>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${s.assignment_status === "Finish"
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                      }`}>
                                       {s.assignment_status || "Pending"}
                                     </span>
                                   </td>
@@ -641,26 +647,26 @@ export default function Assignments() {
                                   <td className="px-3 py-2">
                                     <div className="flex gap-1.5">
                                       <button
-                                        disabled={updatingStudentId === s.student_assignment_id}
-                                        onClick={() => handleUpdateStudentStatus(s.student_assignment_id, "Pending")}
-                                        className={`px-2.5 py-1 rounded-md text-[10px] font-medium border transition ${
-                                          updatingStudentId === s.student_assignment_id 
-                                            ? "bg-gray-200 text-gray-500" 
-                                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                                        }`}
+                                        disabled={updatingStudentId === s.student_assignment_id || s.assignment_status === "Finish"}
+                                        onClick={() => openFinishModal(s.student_assignment_id)}
+                                        className={`px-2.5 py-1 rounded-md text-[10px] font-medium border transition ${updatingStudentId === s.student_assignment_id || s.assignment_status === "Finish"
+                                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                          : "bg-green-600 text-white hover:bg-green-700"
+                                          }`}
+                                        title={s.assignment_status === "Finish" ? "Student has already finished this assignment" : "Mark as finished"}
                                       >
-                                        Pending
+                                        {s.assignment_status === "Finish" ? "Finished" : "Finish"}
                                       </button>
                                       <button
-                                        disabled={updatingStudentId === s.student_assignment_id}
-                                        onClick={() => openFinishModal(s.student_assignment_id)}
-                                        className={`px-2.5 py-1 rounded-md text-[10px] font-medium border transition ${
-                                          updatingStudentId === s.student_assignment_id 
-                                            ? "bg-green-300 text-white cursor-not-allowed" 
-                                            : "bg-green-600 text-white hover:bg-green-700"
-                                        }`}
+                                        disabled={updatingStudentId === s.student_assignment_id || s.assignment_status === "Finish"}
+                                        onClick={() => handleUpdateStudentStatus(s.student_assignment_id, "Pending")}
+                                        className={`px-2.5 py-1 rounded-md text-[10px] font-medium border transition ${updatingStudentId === s.student_assignment_id || s.assignment_status === "Finish"
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                                          }`}
+                                        title={s.assignment_status === "Finish" ? "Student has already finished this assignment" : "Mark as pending"}
                                       >
-                                        Finish
+                                        Pending
                                       </button>
                                     </div>
                                   </td>
