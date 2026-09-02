@@ -227,29 +227,78 @@ export default function Dashboard() {
     setExpandedClassroom(prev => prev === classroomId ? null : classroomId);
   }, []);
 
-  const onToggleTeacherAttendance = useCallback(async () => {
-    setAttError("");
-    try {
-      setAttBusy(true);
-      const coords = await new Promise((resolve) => {
-        if (!navigator.geolocation) return resolve({ latitude: 0, longitude: 0 });
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-          () => resolve({ latitude: 0, longitude: 0 }),
-          { enableHighAccuracy: true, timeout: 8000 }
-        );
-      });
-      const res = await markTeacherAttendance(coords);
-      await refreshProfile();
-      toast.success(res?.message || (isLoggedInToday && !hasLoggedOut ? "Logout successful" : "Login successful"));
-    } catch (e) {
-      const msg = e?.response?.data?.message || e?.message || "Failed to update attendance";
-      setAttError(msg);
-      toast.error(msg);
-    } finally {
-      setAttBusy(false);
-    }
-  }, [refreshProfile]);
+const onToggleTeacherAttendance = useCallback(async () => {
+  setAttError("");
+
+  try {
+    setAttBusy(true);
+
+    const coords = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("GPS is not supported by this browser."));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          console.log("Actual GPS Location:", {
+            latitude,
+            longitude,
+          });
+
+          resolve({
+            latitude,
+            longitude,
+          });
+        },
+        (error) => {
+          console.error("GPS Error:", error);
+
+          if (error.code === 1) {
+            reject(new Error("Location permission denied. Please allow GPS location."));
+          } else if (error.code === 2) {
+            reject(new Error("Unable to get GPS location."));
+          } else if (error.code === 3) {
+            reject(new Error("GPS location request timed out. Please try again."));
+          } else {
+            reject(new Error("Unable to get GPS location."));
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+    });
+
+    console.log("Sending GPS coordinates:", coords);
+
+    const res = await markTeacherAttendance(coords);
+
+    await refreshProfile();
+
+    toast.success(
+      res?.message ||
+        (isLoggedInToday && !hasLoggedOut
+          ? "Logout successful"
+          : "Login successful")
+    );
+  } catch (e) {
+    const msg =
+      e?.response?.data?.message ||
+      e?.message ||
+      "Failed to update attendance";
+
+    setAttError(msg);
+    toast.error(msg);
+  } finally {
+    setAttBusy(false);
+  }
+}, [refreshProfile, isLoggedInToday, hasLoggedOut]);
 
   return (
     // COMPACT CHANGE: Reduced padding from p-4 sm:p-6 to p-3 sm:p-4
