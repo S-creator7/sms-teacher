@@ -287,17 +287,22 @@ const onToggleTeacherAttendance = useCallback(async () => {
           ? "Logout successful"
           : "Login successful")
     );
-  } catch (e) {
-    const msg =
-      e?.response?.data?.message ||
-      e?.message ||
-      "Failed to update attendance";
+ } catch (e) {
+  const msg =
+    e?.response?.data?.message ||
+    e?.message ||
+    "Failed to update attendance";
 
-    setAttError(msg);
-    toast.error(msg);
-  } finally {
-    setAttBusy(false);
-  }
+  setAttError(msg);
+  toast.error(msg);
+
+  // Error message automatically remove after 5 seconds
+  setTimeout(() => {
+    setAttError("");
+  }, 5000);
+} finally {
+  setAttBusy(false);
+}
 }, [refreshProfile, isLoggedInToday, hasLoggedOut]);
 
   return (
