@@ -15,7 +15,8 @@ import {
   LuChevronUp,
   LuTrophy,
   LuCalendarDays,
-  LuBus
+  LuBus,
+  LuVideo
 } from "react-icons/lu";
 import { FaTimes } from "react-icons/fa";
 
@@ -32,13 +33,21 @@ const navGroups = [
   {
     title: "Academic",
     items: [
-      { label: "Curriculum",   to: "/curriculum",   icon: LuBookOpen },
-      { label: "Exams",        to: "/exams",        icon: LuGraduationCap },
-      { label: "Homework",     to: "/homework",     icon: LuFileText },
-      { label: "Assignments",  to: "/assignments",  icon: LuFileText },
-      { label: "Activities",   to: "/activities",   icon: LuTrophy },
+      { label: "Curriculum", to: "/curriculum", icon: LuBookOpen },
       {
-        label: "Events",
+        label: "Meetings",
+        icon: LuVideo,
+        subItems: [
+          { label: "Classroom Meetings", to: "/online-meetings" },
+          { label: "Staff Meetings", to: "/staff-meetings" }
+        ]
+      },
+      { label: "Exams", to: "/exams", icon: LuGraduationCap },
+      { label: "Homework", to: "/homework", icon: LuFileText },
+      { label: "Assignments", to: "/assignments", icon: LuFileText },
+      { label: "Activities", to: "/activities", icon: LuTrophy },
+      { 
+        label: "Events", 
         icon: LuCalendarDays,
         subItems: [
           { label: "All Events",   to: "/events" },
