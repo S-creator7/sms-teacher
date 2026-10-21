@@ -118,14 +118,14 @@ export default function Curriculum() {
         <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-xl font-semibold text-gray-900 mb-1">Curriculum Overview</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Curriculum Overview</h1>
               <p className="text-sm text-gray-600 mb-2">Track subject progress and chapter completion</p>
               {selectedMeta && (
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+                  <span className="bg-[#f86730]/10 text-[#f86730] px-2 py-1 rounded font-medium">
                     Class: {selectedMeta.class_name}
                   </span>
-                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
+                  <span className="bg-[#0F172A]/10 text-[#0F172A] px-2 py-1 rounded font-medium">
                     Section: {selectedMeta.section_name}
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export default function Curriculum() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex gap-2">
                 <select
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[120px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[120px] focus:ring-1 focus:ring-[#f86730] focus:border-[#f86730]"
                   value={selected.class_id}
                   onChange={(e) => setSelected((s) => ({ class_id: e.target.value, classroom_id: "" }))}
                 >
@@ -144,7 +144,7 @@ export default function Curriculum() {
                   ))}
                 </select>
                 <select
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[120px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm min-w-[120px] focus:ring-1 focus:ring-[#f86730] focus:border-[#f86730]"
                   value={selected.classroom_id}
                   onChange={(e) => setSelected((s) => ({ ...s, classroom_id: e.target.value }))}
                   disabled={!sectionOptions.length}
@@ -156,7 +156,7 @@ export default function Curriculum() {
               </div>
               <button
                 onClick={loadCurriculum}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-colors disabled:bg-gray-400"
+                className="px-4 py-2 rounded-lg bg-[#f86730] hover:bg-[#e55a29] text-white font-medium text-sm transition-colors disabled:bg-gray-400"
                 disabled={loading || !classrooms.length}
               >
                 Refresh
@@ -212,7 +212,7 @@ export default function Curriculum() {
                       <td className="px-4 py-3 text-sm text-gray-700">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <button
-                          className="text-blue-600 hover:text-blue-800 text-sm hover:underline transition-colors"
+                          className="text-[#0F172A] hover:text-[#f86730] text-sm font-medium hover:underline transition-colors"
                           onClick={() => navigate(`/curriculum/detail/${s.subject_id}?class_id=${selected.class_id}&classroom_id=${selected.classroom_id}&class_name=${encodeURIComponent(selectedMeta?.class_name || '')}&section_name=${encodeURIComponent(selectedMeta?.section_name || '')}`)}
                         >
                           {s.subject_name}
@@ -225,7 +225,7 @@ export default function Curriculum() {
                         <div className="flex items-center gap-2 min-w-[160px]">
                           <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
                             <div
-                              className="h-2 bg-green-500 rounded-full transition-all duration-300"
+                              className="h-2 bg-[#f86730] rounded-full transition-all duration-300"
                               style={{ width: `${Math.max(0, Math.min(100, Number(s.progress_percentage) || 0))}%` }}
                             />
                           </div>
@@ -236,7 +236,7 @@ export default function Curriculum() {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          className="bg-white border border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                         className="bg-[#fb8c5a] text-white hover:bg-[#f86730] font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 shadow-sm"
                           onClick={() => navigate(`/curriculum/detail/${s.subject_id}?class_id=${selected.class_id}&classroom_id=${selected.classroom_id}`)}
                         >
                           View Details

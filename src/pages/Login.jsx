@@ -82,7 +82,7 @@ const Login = () => {
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center">Teacher Portal</h2>
+        <h2 className="text-2xl font-bold text-center text-[#0F172A]">Teacher Portal</h2>
         <p className="text-gray-600 text-center mb-6">
           Secure Authentication Required
         </p>
@@ -115,7 +115,7 @@ const Login = () => {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="w-full px-4 py-3 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-4 py-3 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f86730] focus:border-transparent"
                     placeholder="Enter your password"
                     {...register("password", { required: true })}
                   />
@@ -135,7 +135,7 @@ const Login = () => {
                     setValue("username", "");
                     setValue("password", "");
                   }}
-                  className="text-blue-500 hover:underline w-fit float-right mt-1"
+                  className="text-[#f86730] hover:underline w-fit float-right mt-1"
                 >
                   Forgot Password?
                 </button>
@@ -145,7 +145,7 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition duration-300 disabled:opacity-50"
+            className="w-full bg-[#f86730] text-white py-3 rounded-lg font-semibold hover:bg-[#e35d1f] transition duration-300 disabled:opacity-50"
             disabled={loading}
           >
             {loading

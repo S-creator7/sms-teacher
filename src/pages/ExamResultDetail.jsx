@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { getSchedulerResults, getTeacherExams } from "../Utility/examApi";
+import { useNavigate } from "react-router-dom";
 
 function pct(marks, max) {
   if (!max || max <= 0 || marks == null) return null;
-  return Math.round((Number(marks) / Number(max)) * 1000) / 10; // 1 decimal
+  return Math.round((Number(marks) / Number(max)) * 1000) / 10;
 }
 
 export default function ExamResultDetail() {
   const { schedulerId } = useParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const passed = (location?.state || {});
   const [loading, setLoading] = useState(false);
@@ -33,8 +35,6 @@ export default function ExamResultDetail() {
       const list = Array.isArray(res?.resources?.data) ? res.resources.data : [];
       const first = list[0] || {};
 
-      // NOTE: teacher scheduler results API doesn't include exam_name/class_name/section_name.
-      // Prefer anything that might come from API, then from route state, then from teacher exams list lookup.
       let nextMeta = {
         subject_id: first.subject_id || passed?.subject_id,
         subject_name: first.subject_name || passed?.subject_name,
@@ -46,7 +46,6 @@ export default function ExamResultDetail() {
         exam_date: first.exam_date || passed?.exam_date,
       };
 
-      // Fallback: lookup scheduler in teacher past exams to get exam_name/subject/class/section
       if (!nextMeta.exam_name || !nextMeta.subject_name || !nextMeta.class_name || !nextMeta.section_name) {
         try {
           const exLimit = 100;
@@ -80,9 +79,7 @@ export default function ExamResultDetail() {
               subject_id: nextMeta.subject_id || found.subject_id,
             };
           }
-        } catch (_) {
-          // ignore
-        }
+        } catch (_) {}
       }
 
       setMeta(nextMeta);
@@ -109,92 +106,132 @@ export default function ExamResultDetail() {
 
   useEffect(() => { load(); }, [schedulerId]);
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
-              {meta.exam_name || "Exam"} • {meta.subject_name || "-"}
-            </h1>
-            <p className="text-xs text-gray-600 mt-1">
-              {(meta.class_name || "-")}{" "}• Sec {(meta.section_name || "-")}{" "}• Max {meta.total_marks ?? "-"}
-              {meta.exam_date ? ` • ${meta.exam_date}` : ""}
-            </p>
+    <div className="p-3 md:p-4 space-y-4 font-sans bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-4">
+        {/* Header with Back Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={handleBack}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors duration-200 group"
+              title="Go Back"
+            >
+              <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">
+                {meta.exam_name || "Exam"} • {meta.subject_name || "-"}
+              </h1>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {meta.class_name || "-"} • Sec {meta.section_name || "-"} • Max {meta.total_marks ?? "-"}
+                {meta.exam_date ? ` • ${meta.exam_date}` : ""}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2 sm:shrink-0">
-            <Link to="/results" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 text-sm">Back to Results</Link>
-            <Link to={`/exams/${schedulerId}/entry`} className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 text-sm">Enter Results</Link>
+          <div className="flex gap-2 flex-shrink-0">
+            <Link 
+              to="/results" 
+              className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition text-sm font-medium"
+            >
+              Back to Results
+            </Link>
+            <Link 
+              to={`/exams/${schedulerId}/entry`} 
+              className="px-3 py-1.5 rounded-lg bg-[#f86730] hover:bg-[#e55a29] text-white transition text-sm font-medium shadow-sm hover:shadow"
+            >
+              Enter Results
+            </Link>
           </div>
         </div>
 
-        <div className="p-4 sm:p-5">
+        {/* Main Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {error && (
-            <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
+            <div className="m-4 p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800">
+              {error}
+            </div>
           )}
 
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <input
-              placeholder="Search student or roll no"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-72"
-            />
-            <div className="text-xs text-gray-500 sm:text-right">
-              {loading ? "Loading..." : `${filtered.length} student(s)`}
+          <div className="p-4">
+            {/* Search and Count */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <input
+                placeholder="Search student or roll no..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:border-[#f86730] focus:ring-2 focus:ring-[#f86730]/20 transition w-full sm:w-72"
+              />
+              <div className="text-xs text-gray-500">
+                {loading ? "Loading..." : `${filtered.length} student${filtered.length !== 1 ? 's' : ''}`}
+              </div>
             </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-700">
-                <tr>
-                  <th className="text-left px-3 py-2 border-b">#</th>
-                  <th className="text-left px-3 py-2 border-b">Roll No</th>
-                  <th className="text-left px-3 py-2 border-b">Student</th>
-                  <th className="text-left px-3 py-2 border-b">Marks</th>
-                  <th className="text-left px-3 py-2 border-b">%</th>
-                  <th className="text-left px-3 py-2 border-b">Status</th>
-                  <th className="text-left px-3 py-2 border-b">Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  [...Array(10)].map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 7 }).map((__, j) => (
-                        <td key={j} className="px-3 py-3 border-b"><div className="h-4 bg-gray-100 rounded"/></td>
-                      ))}
-                    </tr>
-                  ))
-                ) : filtered.length === 0 ? (
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td colSpan={7} className="px-3 py-6 text-center text-gray-500">No students</td>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">#</th>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">Roll No</th>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">Student</th>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">Marks</th>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">%</th>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">Status</th>
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600">Remarks</th>
                   </tr>
-                ) : (
-                  filtered.map((s, idx) => {
-                    const percentage = pct(s.marks, meta.total_marks);
-                    // Prefer API's is_passed if provided, else fallback to pass_marks comparison
-                    const pass = s.marks == null ? null : (typeof s.is_passed === 'number' ? s.is_passed === 1 : (meta.pass_marks != null ? Number(s.marks) >= Number(meta.pass_marks) : (percentage != null ? percentage >= 35 : null)));
-                    return (
-                      <tr key={s.student_id || idx} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 border-b">{idx + 1}</td>
-                        <td className="px-3 py-2 border-b">{s.roll_no}</td>
-                        <td className="px-3 py-2 border-b">{s.student_name || '-'}</td>
-                        <td className="px-3 py-2 border-b">{s.marks ?? '-'}</td>
-                        <td className="px-3 py-2 border-b">{percentage ?? '-'}</td>
-                        <td className="px-3 py-2 border-b">
-                          <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${s.marks == null ? "bg-yellow-100 text-yellow-700 border-yellow-200" : pass ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}`}>
-                            {s.marks == null ? "Pending" : pass ? "Pass" : "Fail"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 border-b">{s.remarks || '-'}</td>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    [...Array(10)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        {Array.from({ length: 7 }).map((__, j) => (
+                          <td key={j} className="px-3 py-2.5"><div className="h-3.5 bg-gray-100 rounded"/></td>
+                        ))}
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    ))
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-3 py-6 text-center text-gray-500 text-sm">
+                        No students found
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((s, idx) => {
+                      const percentage = pct(s.marks, meta.total_marks);
+                      const pass = s.marks == null ? null : (typeof s.is_passed === 'number' ? s.is_passed === 1 : (meta.pass_marks != null ? Number(s.marks) >= Number(meta.pass_marks) : (percentage != null ? percentage >= 35 : null)));
+                      return (
+                        <tr key={s.student_id || idx} className="border-t border-gray-50 hover:bg-gray-50/80 transition">
+                          <td className="px-3 py-2 text-gray-600">{idx + 1}</td>
+                          <td className="px-3 py-2 font-medium text-gray-800">{s.roll_no}</td>
+                          <td className="px-3 py-2 text-gray-700">{s.student_name || '-'}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-900">{s.marks ?? '-'}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-900">{percentage ?? '-'}</td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                              s.marks == null 
+                                ? "bg-yellow-50 text-yellow-700 border-yellow-200" 
+                                : pass 
+                                ? "bg-green-50 text-green-700 border-green-200" 
+                                : "bg-red-50 text-red-700 border-red-200"
+                            }`}>
+                              {s.marks == null ? "Pending" : pass ? "Pass" : "Fail"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-500">{s.remarks || '-'}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

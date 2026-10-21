@@ -3,6 +3,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { subjectDetailsApi, updateTopicProgressApi, getSubjectsApi } from "../Utility/curriculumApi";
 import toast from "react-hot-toast";
 import { getTeacherClassrooms } from "../Utility/attendanceApi";
+import { FaArrowLeft } from "react-icons/fa";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -84,7 +85,7 @@ export default function ChapterTopics() {
             break;
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
   }, [classroom_id, headerClassName, headerSectionName]);
 
@@ -135,14 +136,25 @@ export default function ChapterTopics() {
       <div className="p-4 sm:p-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-            <h1 className="text-xl font-semibold text-gray-900 mb-1">{module_name || 'Chapter'} Topics</h1>
+            <div className="flex items-center gap-3 mb-2">
+  <button
+    onClick={() => window.history.back()}
+    className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-300 bg-white hover:bg-gray-100 transition-all"
+  >
+    <FaArrowLeft className="text-[#0F172A] text-sm" />
+  </button>
+
+  <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">
+    {module_name || "Chapter"} Topics
+  </h1>
+</div>
             <p className="text-sm text-gray-600 mb-2">Manage topic progress for this chapter</p>
             {(headerClassName || headerSectionName) && (
               <div className="flex items-center gap-3 text-sm">
-                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+                <span className="bg-[#f86730]/10 text-[#f86730] px-2 py-1 rounded font-medium">
                   Class: {headerClassName || '-'}
                 </span>
-                <span className="bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
+                <span className="bg-[#0F172A]/10 text-[#0F172A] px-2 py-1 rounded font-medium">
                   Section: {headerSectionName || '-'}
                 </span>
               </div>
@@ -160,17 +172,17 @@ export default function ChapterTopics() {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="rounded-lg border border-[#f86730]/20 bg-[#f86730]/5 p-4">
                 <div className="text-sm text-gray-600">Total Topics</div>
-                <div className="text-2xl font-bold text-gray-900">{counts.total}</div>
+                <div className="text-2xl font-bold text-[#0F172A]">{counts.total}</div>
               </div>
-              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-                <div className="text-sm text-green-700">Completed</div>
-                <div className="text-2xl font-bold text-green-800">{counts.completed}</div>
+              <div className="rounded-lg border border-[#f86730]/20 bg-[#f86730]/5 p-4">
+                <div className="text-sm text-[#f86730]">Completed</div>
+                <div className="text-2xl font-bold text-[#0F172A]">{counts.completed}</div>
               </div>
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <div className="text-sm text-amber-700">Pending</div>
-                <div className="text-2xl font-bold text-amber-800">{counts.pending}</div>
+              <div className="rounded-lg border border-[#0F172A]/20 bg-[#0F172A]/5 p-4">
+                <div className="text-sm text-[#0F172A]">Pending</div>
+                <div className="text-2xl font-bold text-[#0F172A]">{counts.pending}</div>
               </div>
             </div>
 
@@ -206,17 +218,16 @@ export default function ChapterTopics() {
                         <td className="px-4 py-3 text-sm text-gray-700">{t.topic_name}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{t.topic_description || t.description || '-'}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            String(t.progress_status).toLowerCase() === 'completed' 
-                              ? 'bg-green-100 text-green-800 border border-green-200' 
-                              : 'bg-gray-100 text-gray-700 border border-gray-200'
-                          }`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${String(t.progress_status).toLowerCase() === 'completed'
+                              ? 'bg-[#f86730]/10 text-[#f86730] border-[#f86730]/20'
+                              : 'bg-[#0F172A]/10 text-[#0F172A] border-[#0F172A]/20'
+                            }`}>
                             {t.progress_status || 'pending'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
                           <button
-                            className="bg-white border border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-[#f86730] border border-[#f86730] text-white hover:bg-[#e55a29] hover:border-[#e55a29] font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={!canUpdate || String(t.progress_status).toLowerCase() === 'completed' || savingId === t.topic_id}
                             onClick={() => openConfirm(t)}
                           >

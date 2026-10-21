@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { Bus, Navigation, History } from "lucide-react";
+import { Bus, Navigation, History, Users, MapPin, Clock } from "lucide-react";
 import TransportStudents from "./TransportStudents";
 import TransportLiveTracking from "./TransportLiveTracking";
 import TransportHistory from "./TransportHistory";
 
 const TABS = [
-  { id: "students", label: "Students Tracking", icon: Bus, path: "/transport/students" },
-  { id: "live", label: "Live Tracking", icon: Navigation, path: "/transport/live" },
-  { id: "history", label: "History", icon: History, path: "/transport/history" },
+  { id: "students", label: "Students Tracking", icon: Users, path: "/transport/students" },
+  { id: "live", label: "Live Tracking", icon: MapPin, path: "/transport/live" },
+  { id: "history", label: "History", icon: Clock, path: "/transport/history" },
 ];
 
 const Transport = () => {
@@ -24,17 +24,26 @@ const Transport = () => {
     navigate("/transport/live");
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="flex flex-col h-full min-h-[calc(100vh-64px)] bg-gray-50">
+    <div className="flex flex-col h-full min-h-[calc(100vh-64px)] bg-[#F8FAFC]">
       {/* Page header */}
-      <div className="bg-white border-b border-gray-200 px-4 md:px-6 pt-5 pb-0 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 bg-blue-600 rounded-xl shadow-md">
-            <Bus className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Transport</h1>
-            <p className="text-xs text-gray-500">Track students' school buses in real time</p>
+      <div className="bg-white border-b border-gray-100 px-4 md:px-6 pt-4 pb-0 flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+           
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#f86730] rounded-lg shadow-sm">
+                <Bus className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Transport</h1>
+                <p className="text-xs text-gray-500 mt-0.5">Track students' school buses in real time</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -46,9 +55,9 @@ const Transport = () => {
               <button
                 key={id}
                 onClick={() => navigate(path)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
                   isActive
-                    ? "border-blue-600 text-blue-600 bg-blue-50"
+                    ? "border-[#f86730] text-[#f86730] bg-[#f86730]/5"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >

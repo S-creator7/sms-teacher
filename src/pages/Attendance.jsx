@@ -56,9 +56,9 @@ export default function Attendance() {
 
   const isFutureSelected = useMemo(() => {
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     const sel = new Date(date);
-    sel.setHours(0,0,0,0);
+    sel.setHours(0, 0, 0, 0);
     return sel.getTime() > today.getTime();
   }, [date]);
 
@@ -223,7 +223,9 @@ export default function Attendance() {
     <div className="p-4 sm:p-6">
       <div className="w-full">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Student Attendance</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            Student Attendance
+          </h1>
           <p className="text-sm text-gray-600 mt-1">View and manage daily student attendance records</p>
         </div>
 
@@ -231,7 +233,7 @@ export default function Attendance() {
           <div className="mb-6 p-4 rounded-xl bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
             <div className="font-semibold mb-1">Action required</div>
             <div className="mb-2">You must Login for the day before accessing student attendance.</div>
-            <a href="/my-attendance" className="inline-block px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">Go to My Attendance</a>
+            <a href="/my-attendance" className="inline-block px-3 py-2 rounded-lg bg-[#f86730] text-white text-sm font-semibold hover:bg-[#e55a29]">Go to My Attendance</a>
           </div>
         )}
 
@@ -413,11 +415,11 @@ export default function Attendance() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{s.name || '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex gap-2">
-                              {['Present','Absent','Late'].map((opt) => (
+                              {['Present', 'Absent', 'Late'].map((opt) => (
                                 <button
                                   key={opt}
                                   onClick={() => setEditRows((rows) => rows.map((r) => r.student_id === s.student_id ? { ...r, status: opt } : r))}
-                                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${s.status === opt ? (opt==='Present' ? 'bg-green-600 text-white border-green-700' : opt==='Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600') : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${s.status === opt ? (opt === 'Present' ? 'bg-green-600 text-white border-green-700' : opt === 'Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600') : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                                 >
                                   {opt}
                                 </button>
@@ -448,11 +450,11 @@ export default function Attendance() {
                             <>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex gap-2">
-                                  {['Present','Absent','Late'].map((opt) => (
+                                  {['Present', 'Absent', 'Late'].map((opt) => (
                                     <button
                                       key={opt}
                                       onClick={() => setRowEditStatus(opt)}
-                                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${rowEditStatus === opt ? (opt==='Present' ? 'bg-green-600 text-white border-green-700' : opt==='Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600') : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${rowEditStatus === opt ? (opt === 'Present' ? 'bg-green-600 text-white border-green-700' : opt === 'Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600') : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                                     >
                                       {opt}
                                     </button>
@@ -538,11 +540,11 @@ export default function Attendance() {
               <div className="mt-4 space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-gray-700 font-medium">Mark all:</span>
-                  {['Present','Absent','Late'].map((opt) => (
+                  {['Present', 'Absent', 'Late'].map((opt) => (
                     <button
                       key={opt}
                       onClick={() => setEditRows((rows) => rows.map((r) => ({ ...r, status: opt })))}
-                      className={`px-3 py-2 rounded-lg text-sm font-semibold border ${opt==='Present' ? 'bg-green-600 text-white border-green-700' : opt==='Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600'}`}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold border ${opt === 'Present' ? 'bg-green-600 text-white border-green-700' : opt === 'Absent' ? 'bg-red-600 text-white border-red-700' : 'bg-yellow-500 text-white border-yellow-600'}`}
                     >
                       {opt}
                     </button>
@@ -724,8 +726,8 @@ export default function Attendance() {
                   }}
                   disabled={!expStartDate || !expEndDate || !expClassroomId || exporting}
                   className={`inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold transition-all shadow ${!expStartDate || !expEndDate || !expClassroomId || exporting
-                      ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                      : "bg-gray-800 text-white hover:bg-gray-900"
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-gray-800 text-white hover:bg-gray-900"
                     }`}
                 >
                   Export All

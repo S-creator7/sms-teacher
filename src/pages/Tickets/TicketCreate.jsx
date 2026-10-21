@@ -56,21 +56,21 @@ export default function TicketCreate() {
                 <input
                     type="text"
                     placeholder="Title"
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-blue-400 focus:ring-0"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-[#f86730] focus:ring-2 focus:ring-[#f86730]/20 focus:outline-none"
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
 
                 <textarea
                     placeholder="Description"
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-blue-400 focus:ring-0"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-[#f86730] focus:ring-2 focus:ring-[#f86730]/20 focus:outline-none"
                     rows="4"
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                 />
 
                 <select
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-blue-400 focus:ring-0"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-[#f86730] focus:ring-2 focus:ring-[#f86730]/20 focus:outline-none"
                     value={form.category_id}
                     onChange={(e) => setForm({ ...form, category_id: e.target.value })}
                 >
@@ -83,7 +83,7 @@ export default function TicketCreate() {
                 </select>
 
                 <select
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-blue-400 focus:ring-0"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:border-[#f86730] focus:ring-2 focus:ring-[#f86730]/20 focus:outline-none"
                     value={form.priority}
                     onChange={(e) => setForm({ ...form, priority: e.target.value })}
                 >
@@ -93,7 +93,7 @@ export default function TicketCreate() {
                 </select>
 
                 <button
-                    className="bg-black text-white px-4 py-2 rounded-lg w-full hover:bg-blue-700"
+                    className="bg-[#f86730] text-white px-4 py-3 rounded-lg w-full font-semibold hover:bg-[#e35d1f] transition duration-200"
                     type="submit"
                 >
                     Submit Ticket

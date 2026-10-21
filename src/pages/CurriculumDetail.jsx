@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { subjectDetailsApi } from "../Utility/curriculumApi";
 import { getTeacherClassrooms } from "../Utility/attendanceApi";
+import { FaArrowLeft } from "react-icons/fa";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -60,17 +61,29 @@ export default function CurriculumDetail() {
     <div className="p-4 sm:p-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900 mb-1">Chapter Progress</h1>
+        <div className="flex items-center gap-3 mb-2">
+  <button
+    onClick={() => navigate(-1)}
+    className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 transition-colors"
+  >
+    <FaArrowLeft className="text-[#0F172A] text-sm" />
+  </button>
+
+  <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">
+    Chapter Progress
+  </h1>
+</div>
           <p className="text-sm text-gray-600 mb-2">Click on any chapter to view and manage topics</p>
           {(headerClassName || headerSectionName) && (
             <div className="flex items-center gap-3 text-sm">
-              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+              <span className="bg-[#f86730]/10 text-[#f86730] px-2 py-1 rounded font-medium">
                 Class: {headerClassName || '-'}
               </span>
-              <span className="bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
+              <span className="bg-[#0F172A]/10 text-[#0F172A] px-2 py-1 rounded font-medium">
                 Section: {headerSectionName || '-'}
               </span>
             </div>
+            
           )}
         </div>
 
@@ -98,7 +111,7 @@ export default function CurriculumDetail() {
               rows.map((item, index) => (
                 <div
                   key={item.module_id || index}
-                  className="bg-white border border-gray-200 rounded-lg p-2 hover:border-green-400 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                  className="bg-white border border-gray-200 rounded-lg p-2 hover:border-[#f86730] hover:shadow-md transition-all duration-200 cursor-pointer group"
                   onClick={() =>
                     navigate(`/curriculum/chapter/${item.module_id}?subject_id=${encodeURIComponent(subjectId)}&class_id=${encodeURIComponent(class_id)}&classroom_id=${encodeURIComponent(classroom_id)}&module_name=${encodeURIComponent(item.module_name || '')}&class_name=${encodeURIComponent(headerClassName || '')}&section_name=${encodeURIComponent(headerSectionName || '')}`)
                   }
@@ -106,14 +119,14 @@ export default function CurriculumDetail() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-sm font-semibold group-hover:bg-green-200 transition-colors">
+                        <div className="w-8 h-8 bg-[#f86730]/10 text-[#f86730] rounded-lg flex items-center justify-center text-sm font-semibold group-hover:bg-[#f86730]/20 transition-colors">
                           {index + 1}
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-[#0F172A] group-hover:text-[#f86730] transition-colors">
                           {item.module_name}
                         </h3>
                         <div className="ml-2 flex items-center gap-1">
-                          <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-400 group-hover:text-[#f86730] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
@@ -128,7 +141,7 @@ export default function CurriculumDetail() {
                         <div className="flex items-center gap-2 mb-1">
                           <div className="w-100 bg-gray-200 rounded-full h-2 overflow-hidden">
                             <div 
-                              className="h-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500" 
+                              className="h-2 bg-[#f86730] rounded-full transition-all duration-500"
                               style={{ width: `${Math.max(0, Math.min(100, Number(item.progress_percentage) || 0))}%` }} 
                             />
                           </div>
@@ -139,8 +152,8 @@ export default function CurriculumDetail() {
                         <div className="text-xs text-gray-500">Completion</div>
                       </div>
                       
-                      <div className="w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
-                        <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-8 h-8 bg-gray-100 group-hover:bg-[#f86730]/10 rounded-full flex items-center justify-center transition-colors">
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-[#f86730] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </div>
