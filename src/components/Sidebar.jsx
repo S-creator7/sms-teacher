@@ -15,7 +15,12 @@ import {
   LuChevronUp,
   LuTrophy,
   LuCalendarDays,
-  LuBus
+  LuBus,
+  LuBriefcase,
+  LuUser,
+  LuWallet,
+  LuTrendingUp,
+  LuBox
 } from "react-icons/lu";
 import { FaTimes } from "react-icons/fa";
 
@@ -66,6 +71,25 @@ const navGroups = [
           { label: "Students Tracking", to: "/transport/students" },
           { label: "Live Tracking",     to: "/transport/live" },
           { label: "History",           to: "/transport/history" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "HRMS",
+    items: [
+      {
+        label: "HRMS & Service",
+        icon: LuBriefcase,
+        subItems: [
+          { label: "Dashboard",       to: "/hrms/dashboard" },
+          { label: "My Profile",      to: "/hrms/profile" },
+          { label: "Attendance & Shift", to: "/hrms/attendance" },
+          { label: "Leaves & Gate Pass", to: "/hrms/leaves" },
+          { label: "Payroll",         to: "/hrms/payroll" },
+          { label: "CPD & Training",  to: "/hrms/cpd" },
+          { label: "PMS Appraisal",   to: "/hrms/appraisal" },
+          { label: "Assets & Exit",   to: "/hrms/assets" },
         ],
       },
     ],

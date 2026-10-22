@@ -30,14 +30,17 @@ export default function ConversationSidebar({
 }) {
   const navigate = useNavigate();
 
+  // Determine visibility on mobile:
+  // If a conversation is selected, hide the sidebar on mobile (to show chat).
+  // If no conversation is selected, show the sidebar full width on mobile.
+  const isMobileHidden = selectedConversation ? "hidden lg:flex" : "flex";
+
   return (
     <div
-      className={`${
-        conversations.length > 0 ? "hidden lg:flex" : "flex"
-      } w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0`}
+      className={`${isMobileHidden} w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0 h-full`}
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#f86730] flex items-center justify-center text-white font-semibold text-xs">
             T
@@ -61,7 +64,7 @@ export default function ConversationSidebar({
       </div>
 
       {/* Search & Filters */}
-      <div className="px-4 py-3 border-b border-gray-100">
+      <div className="px-4 py-3 border-b border-gray-100 shrink-0">
         <div className="relative">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
           <input
@@ -122,7 +125,7 @@ export default function ConversationSidebar({
                     : "hover:bg-gray-50/80"
                 }`}
               >
-                <div className="w-9 h-9 rounded-full bg-[#f86730]/10 flex items-center justify-center text-xs font-semibold text-[#f86730]">
+                <div className="w-9 h-9 rounded-full bg-[#f86730]/10 flex items-center justify-center text-xs font-semibold text-[#f86730] shrink-0">
                   {`${conv.parent_first_name || ""} ${conv.parent_last_name || ""}`.trim()[0]?.toUpperCase() ||
                     "P"}
                 </div>
@@ -131,16 +134,16 @@ export default function ConversationSidebar({
                     <div className="font-medium text-sm text-gray-800 truncate">
                       {`${conv.parent_first_name || ""} ${conv.parent_last_name || ""}`.trim()}
                     </div>
-                    <div className="text-[10px] text-gray-400 whitespace-nowrap">
+                    <div className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
                       {formatTime(conv.last_message_at || conv.created_at)}
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-gray-500 truncate mr-2">
                       {`${conv.student_first_name || ""} ${conv.student_last_name || ""}`.trim()}
                       {conv.subject_name ? ` • ${conv.subject_name}` : ""}
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {conv.unread_count > 0 && (
                         <span className="min-w-[20px] h-5 text-center rounded-full bg-[#f86730] text-white text-[10px] font-medium flex items-center justify-center px-1.5">
                           {conv.unread_count}

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate,useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import Provider, { UserContext } from "./components/Provider";
 import Loader from "./components/loader";
@@ -37,11 +37,49 @@ import TicketAnalytics from "./components/Tickets/TicketAnalytics";
 import Events from "./pages/Events";
 import Certificates from "./pages/Certificates";
 import Transport from "./pages/Transport";
+import HrmsDashboard from "./pages/HRMS/HrmsDashboard";
+import HrmsProfile from "./pages/HRMS/HrmsProfile";
+import HrmsPayroll from "./pages/HRMS/HrmsPayroll";
+import HrmsCpd from "./pages/HRMS/HrmsCpd";
+import HrmsAppraisal from "./pages/HRMS/HrmsAppraisal";
+import HrmsAssets from "./pages/HRMS/HrmsAssets";
+import HrmsAttendance from "./pages/HRMS/HrmsAttendance";
+import HrmsLeaves from "./pages/HRMS/HrmsLeaves";
 
 function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const location = useLocation();
+  const navigate = useNavigate();
+
+useEffect(() => {
+  const checkSession = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+
+      if (payload.exp && payload.exp * 1000 <= Date.now()) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("access_token");
+        navigate("/login", { replace: true });
+      }
+    } catch (error) {
+      // Non-JWT token: expiry must be handled by the API response.
+    }
+  };
+
+  checkSession();
+
+  return () => {};
+
+  return () => clearInterval(interval);
+}, [navigate]);
   const { loading } = useContext(UserContext);
 
   const hideSidebar = ["/", "/login"].includes(location.pathname);
@@ -337,6 +375,70 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Transport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <HrmsDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/profile"
+                element={
+                  <ProtectedRoute>
+                    <HrmsProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/attendance"
+                element={
+                  <ProtectedRoute>
+                    <HrmsAttendance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/leaves"
+                element={
+                  <ProtectedRoute>
+                    <HrmsLeaves />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/payroll"
+                element={
+                  <ProtectedRoute>
+                    <HrmsPayroll />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/cpd"
+                element={
+                  <ProtectedRoute>
+                    <HrmsCpd />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/appraisal"
+                element={
+                  <ProtectedRoute>
+                    <HrmsAppraisal />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hrms/assets"
+                element={
+                  <ProtectedRoute>
+                    <HrmsAssets />
                   </ProtectedRoute>
                 }
               />

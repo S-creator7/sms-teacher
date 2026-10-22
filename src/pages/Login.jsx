@@ -63,14 +63,22 @@ const Login = () => {
       };
       try {
         const logInRes = await LogInApi(body);
-        if (logInRes?.status) {
-          const data = logInRes?.resources?.data;
-          toast.success(logInRes?.message);
-          localStorage.setItem("user", JSON.stringify(data));
-          if (data?.token) localStorage.setItem("token", data.token);
-          setLoading(false);
-          navigate("/dashboard");
-        }
+      if (logInRes?.status) {
+  const data = logInRes?.resources?.data;
+  const token = data?.token || data?.access_token;
+
+  if (!token) {
+    toast.error("Login successful, but token is missing in API response.");
+    console.error("Login response:", logInRes);
+    return;
+  }
+
+  localStorage.setItem("user", JSON.stringify(data));
+  localStorage.setItem("token", token);
+
+  toast.success(logInRes?.message || "Login successful");
+  navigate("/dashboard", { replace: true });
+}
       } catch (error) {
         setLoading(false);
         toast.error(error?.response?.data?.message);
@@ -131,9 +139,8 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => {
+                    reset({ email: "" });
                     setIsForgotPassword(true);
-                    setValue("username", "");
-                    setValue("password", "");
                   }}
                   className="text-[#f86730] hover:underline w-fit float-right mt-1"
                 >
@@ -153,16 +160,16 @@ const Login = () => {
                 ? "Sending..."
                 : "Logging in..."
               : isForgotPassword
-              ? "Send Reset Link"
-              : "Login"}
+                ? "Send Reset Link"
+                : "Login"}
           </button>
 
           {isForgotPassword && (
             <button
               type="button"
               onClick={() => {
+                reset({ username: "", password: "" });
                 setIsForgotPassword(false);
-                setValue("email", "");
               }}
               className="text-sm text-gray-600 hover:text-black mt-2 block text-center w-full"
             >

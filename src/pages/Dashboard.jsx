@@ -227,83 +227,84 @@ export default function Dashboard() {
     setExpandedClassroom(prev => prev === classroomId ? null : classroomId);
   }, []);
 
-const onToggleTeacherAttendance = useCallback(async () => {
-  setAttError("");
+  const onToggleTeacherAttendance = useCallback(async () => {
+    setAttError("");
+    if (hasLoggedOut) return;
+    
+    try {
+      setAttBusy(true);
 
-  try {
-    setAttBusy(true);
-
-    const coords = await new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("GPS is not supported by this browser."));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          console.log("Actual GPS Location:", {
-            latitude,
-            longitude,
-          });
-
-          resolve({
-            latitude,
-            longitude,
-          });
-        },
-        (error) => {
-          console.error("GPS Error:", error);
-
-          if (error.code === 1) {
-            reject(new Error("Location permission denied. Please allow GPS location."));
-          } else if (error.code === 2) {
-            reject(new Error("Unable to get GPS location."));
-          } else if (error.code === 3) {
-            reject(new Error("GPS location request timed out. Please try again."));
-          } else {
-            reject(new Error("Unable to get GPS location."));
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
+      const coords = await new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("GPS is not supported by this browser."));
+          return;
         }
-      );
-    });
 
-    console.log("Sending GPS coordinates:", coords);
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
 
-    const res = await markTeacherAttendance(coords);
+            console.log("Actual GPS Location:", {
+              latitude,
+              longitude,
+            });
 
-    await refreshProfile();
+            resolve({
+              latitude,
+              longitude,
+            });
+          },
+          (error) => {
+            console.error("GPS Error:", error);
 
-    toast.success(
-      res?.message ||
+            if (error.code === 1) {
+              reject(new Error("Location permission denied. Please allow GPS location."));
+            } else if (error.code === 2) {
+              reject(new Error("Unable to get GPS location."));
+            } else if (error.code === 3) {
+              reject(new Error("GPS location request timed out. Please try again."));
+            } else {
+              reject(new Error("Unable to get GPS location."));
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+          }
+        );
+      });
+
+      console.log("Sending GPS coordinates:", coords);
+
+      const res = await markTeacherAttendance(coords);
+
+      await refreshProfile();
+
+      toast.success(
+        res?.message ||
         (isLoggedInToday && !hasLoggedOut
           ? "Logout successful"
           : "Login successful")
-    );
- } catch (e) {
-  const msg =
-    e?.response?.data?.message ||
-    e?.message ||
-    "Failed to update attendance";
+      );
+    } catch (e) {
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Failed to update attendance";
 
-  setAttError(msg);
-  toast.error(msg);
+      setAttError(msg);
+      toast.error(msg);
 
-  // Error message automatically remove after 5 seconds
-  setTimeout(() => {
-    setAttError("");
-  }, 5000);
-} finally {
-  setAttBusy(false);
-}
-}, [refreshProfile, isLoggedInToday, hasLoggedOut]);
+      // Error message automatically remove after 5 seconds
+      setTimeout(() => {
+        setAttError("");
+      }, 5000);
+    } finally {
+      setAttBusy(false);
+    }
+  }, [refreshProfile, isLoggedInToday, hasLoggedOut]);
 
   return (
     // COMPACT CHANGE: Reduced padding from p-4 sm:p-6 to p-3 sm:p-4
@@ -343,12 +344,12 @@ const onToggleTeacherAttendance = useCallback(async () => {
               </div>
               <button
                 onClick={onToggleTeacherAttendance}
-                disabled={attBusy}
+                disabled={attBusy || hasLoggedOut}
                 // COMPACT CHANGE: Reduced padding from px-3 py-2 to px-2.5 py-1.5
                 // COMPACT CHANGE: Reduced border-radius from rounded-xl to rounded-lg
                 // COMPACT CHANGE: Reduced font size from text-sm to text-xs
-                className={`group inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isLoggedInToday && !hasLoggedOut
-                  ? "bg-gray-300 text-gray-700"
+                className={`group inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${hasLoggedOut
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-[#f86730] text-white hover:bg-[#e55a29]"
                   } flex-shrink-0`}
                 title={isLoggedInToday && !hasLoggedOut ? "Logout" : "Login"}
