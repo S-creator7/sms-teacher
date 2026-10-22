@@ -16,6 +16,11 @@ import {
   LuTrophy,
   LuCalendarDays,
   LuBus,
+  LuBriefcase,
+  LuUser,
+  LuWallet,
+  LuTrendingUp,
+  LuBox,
   LuVideo
 } from "react-icons/lu";
 import { FaTimes } from "react-icons/fa";
@@ -24,10 +29,10 @@ const navGroups = [
   {
     title: "Main",
     items: [
-      { label: "Dashboard",    to: "/dashboard",    icon: LuLayoutDashboard },
-      { label: "Timetable",    to: "/timetable",    icon: LuCalendar },
-      { label: "Attendance",   to: "/attendance",   icon: LuUsers },
-      { label: "My Attendance",to: "/my-attendance",icon: LuUsers },
+      { label: "Dashboard", to: "/dashboard", icon: LuLayoutDashboard },
+      { label: "Timetable", to: "/timetable", icon: LuCalendar },
+      { label: "Attendance", to: "/attendance", icon: LuUsers },
+      { label: "My Attendance", to: "/my-attendance", icon: LuUsers },
     ],
   },
   {
@@ -46,23 +51,23 @@ const navGroups = [
       { label: "Homework", to: "/homework", icon: LuFileText },
       { label: "Assignments", to: "/assignments", icon: LuFileText },
       { label: "Activities", to: "/activities", icon: LuTrophy },
-      { 
-        label: "Events", 
+      {
+        label: "Events",
         icon: LuCalendarDays,
         subItems: [
-          { label: "All Events",   to: "/events" },
+          { label: "All Events", to: "/events" },
           { label: "Certificates", to: "/certificates" },
         ],
       },
-      { label: "Results",      to: "/results",      icon: LuFileText },
+      { label: "Results", to: "/results", icon: LuFileText },
     ],
   },
   {
     title: "Management",
     items: [
       { label: "Leave", to: "/leave", icon: LuFileText },
-      { label: "POSH",  to: "/posh",  icon: LuShieldCheck },
-      { label: "Chat",  to: "/chat",  icon: LuMessageCircle },
+      { label: "POSH", to: "/posh", icon: LuShieldCheck },
+      { label: "Chat", to: "/chat", icon: LuMessageCircle },
     ],
   },
   {
@@ -73,8 +78,27 @@ const navGroups = [
         icon: LuBus,
         subItems: [
           { label: "Students Tracking", to: "/transport/students" },
-          { label: "Live Tracking",     to: "/transport/live" },
-          { label: "History",           to: "/transport/history" },
+          { label: "Live Tracking", to: "/transport/live" },
+          { label: "History", to: "/transport/history" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "HRMS",
+    items: [
+      {
+        label: "HRMS & Service",
+        icon: LuBriefcase,
+        subItems: [
+          { label: "Dashboard", to: "/hrms/dashboard" },
+          { label: "My Profile", to: "/hrms/profile" },
+          { label: "Attendance & Shift", to: "/hrms/attendance" },
+          { label: "Leaves & Gate Pass", to: "/hrms/leaves" },
+          { label: "Payroll", to: "/hrms/payroll" },
+          { label: "CPD & Training", to: "/hrms/cpd" },
+          { label: "PMS Appraisal", to: "/hrms/appraisal" },
+          { label: "Assets & Exit", to: "/hrms/assets" },
         ],
       },
     ],
@@ -87,7 +111,7 @@ const navGroups = [
         icon: LuTicket,
         subItems: [
           { label: "All Tickets", to: "/tickets" },
-          { label: "Analytics",   to: "/ticket-analytics" },
+          { label: "Analytics", to: "/ticket-analytics" },
         ],
       },
     ],
@@ -126,19 +150,17 @@ function Section({ title, items, onNavigate, activePath }) {
                 <button
                   type="button"
                   onClick={() => toggleDropdown(label)}
-                  className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200 focus:outline-none ${
-                    isDropdownOpen || isAnySubActive
+                  className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200 focus:outline-none ${isDropdownOpen || isAnySubActive
                       ? "bg-[#1E293B] text-white"
                       : "text-slate-300 hover:bg-[#1E293B] hover:text-white"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Icon
-                      className={`text-base flex-shrink-0 ${
-                        isDropdownOpen || isAnySubActive
+                      className={`text-base flex-shrink-0 ${isDropdownOpen || isAnySubActive
                           ? "text-[#f86730]"
                           : "text-slate-400 group-hover:text-white"
-                      }`}
+                        }`}
                     />
                     <span className="text-sm font-medium truncate">{label}</span>
                   </div>
@@ -153,19 +175,17 @@ function Section({ title, items, onNavigate, activePath }) {
                   to={to}
                   onClick={onNavigate}
                   className={({ isActive: active }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                      active
-                        ? "bg-[#f86730] text-white font-semibold shadow-md shadow-orange-900/20"
-                        : "text-slate-300 hover:bg-[#1E293B] hover:text-white font-medium"
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
+                      ? "bg-[#f86730] text-white font-semibold shadow-md shadow-orange-900/20"
+                      : "text-slate-300 hover:bg-[#1E293B] hover:text-white font-medium"
                     }`
                   }
                 >
                   {({ isActive: active }) => (
                     <>
                       <Icon
-                        className={`text-base flex-shrink-0 ${
-                          active ? "text-white" : "text-slate-400 group-hover:text-white"
-                        }`}
+                        className={`text-base flex-shrink-0 ${active ? "text-white" : "text-slate-400 group-hover:text-white"
+                          }`}
                       />
                       <span className="text-sm truncate">{label}</span>
                     </>
@@ -182,10 +202,9 @@ function Section({ title, items, onNavigate, activePath }) {
                       to={subTo}
                       onClick={onNavigate}
                       className={({ isActive: active }) =>
-                        `block px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                          active
-                            ? "bg-[#f86730] text-white font-medium shadow-md shadow-orange-900/20"
-                            : "text-slate-400 hover:bg-[#1E293B] hover:text-white"
+                        `block px-3 py-2 rounded-lg text-sm transition-all duration-200 ${active
+                          ? "bg-[#f86730] text-white font-medium shadow-md shadow-orange-900/20"
+                          : "text-slate-400 hover:bg-[#1E293B] hover:text-white"
                         }`
                       }
                     >

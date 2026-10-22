@@ -56,7 +56,7 @@ export default function ChatWindow({
   if (!conversation)
     return (
       <div className="flex-1 flex items-center justify-center bg-[#f8f9fa]">
-        <div className="text-center">
+        <div className="text-center px-4">
           <div className="text-xl font-bold text-gray-400 mb-1">AAPLISHALA</div>
           <div className="text-gray-500 text-xs">Select a conversation to start messaging</div>
         </div>
@@ -66,21 +66,21 @@ export default function ChatWindow({
   return (
     <div className={`${
       conversation ? "flex" : "hidden lg:flex"
-    } flex-1 flex-col bg-slate-900 min-h-0`}>
-      <div className="bg-[#f0f2f5] px-4 py-2 border-b border-gray-300 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white">
+    } flex-1 flex-col bg-slate-900 min-h-0 relative`}>
+      <div className="bg-[#f0f2f5] px-3 sm:px-4 py-2 border-b border-gray-300 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
             {`${conversation.parent_first_name || ""} ${
               conversation.parent_last_name || ""
             }`.trim()[0]?.toUpperCase() || "P"}
           </div>
-          <div>
-            <div className="font-semibold text-gray-900 text-sm">
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900 text-sm truncate">
               {`${conversation.parent_first_name || ""} ${
                 conversation.parent_last_name || ""
               }`.trim()}
             </div>
-            <div className="text-xs text-gray-600">
+            <div className="text-xs text-gray-600 truncate">
               {`${conversation.student_first_name || ""} ${
                 conversation.student_last_name || ""
               }`.trim()}
@@ -90,7 +90,7 @@ export default function ChatWindow({
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="relative lg:flex hidden">
             <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
             <input
@@ -103,14 +103,14 @@ export default function ChatWindow({
           <button
             type="button"
             onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className="lg:hidden w-9 h-9 bg-gray-500 hover:bg-gray-600 text-white rounded-full flex items-center justify-center transition-colors"
+            className="lg:hidden w-8 h-8 sm:w-9 sm:h-9 bg-gray-500 hover:bg-gray-600 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
           >
             {showMobileSearch ? <FaTimes size={14} /> : <FaSearch size={14} />}
           </button>
           <button
             type="button"
             onClick={onInfo}
-            className="w-9 h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
           >
             <FaInfoCircle size={18} />
           </button>
@@ -118,20 +118,20 @@ export default function ChatWindow({
       </div>
 
       {showMobileSearch && (
-        <div className="lg:hidden absolute top-0 left-0 right-0 bg-white border-b border-gray-300 p-4 z-50">
+        <div className="lg:hidden absolute top-0 left-0 right-0 bg-white border-b border-gray-300 p-3 sm:p-4 z-50">
           <div className="flex items-center gap-2 mb-3">
-            <FaSearch className="text-gray-500" size={16} />
+            <FaSearch className="text-gray-500 flex-shrink-0" size={16} />
             <input
               value={searchInConversation}
               onChange={(e) => handleSearch(e.target.value)}
-              className="flex-1 bg-gray-50 text-sm pl-10 pr-4 py-2.5 rounded-xl outline-none border border-gray-300 focus:border-blue-500"
+              className="flex-1 bg-gray-50 text-sm pl-3 sm:pl-4 pr-3 sm:pr-4 py-2.5 rounded-xl outline-none border border-gray-300 focus:border-blue-500 min-w-0"
               placeholder="Search in chat..."
               autoFocus
             />
             <button
               type="button"
               onClick={() => setShowMobileSearch(false)}
-              className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center"
+              className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0"
             >
               <FaTimes size={14} />
             </button>
