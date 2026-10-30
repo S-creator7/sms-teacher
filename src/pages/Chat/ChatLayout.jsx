@@ -41,7 +41,7 @@ const initialState = {
   parentSearch: "",
   parentResults: [],
   classParents: [],
-  loadingClassParents: false,
+  classParentsLoaded: false,
   selectedClassKey: "",
   selectedSubjectId: "",
   selectedStudentId: "",
@@ -98,7 +98,11 @@ function reducer(state, action) {
     case "SET_PARENT_RESULTS":
       return { ...state, parentResults: action.payload };
     case "SET_CLASS_PARENTS":
-      return { ...state, classParents: action.payload };
+  return {
+    ...state,
+    classParents: action.payload,
+    classParentsLoaded: true,
+  };
     case "LOADING_CLASS_PARENTS":
       return { ...state, loadingClassParents: action.payload };
     case "SET_SELECTED_CLASS_KEY":
@@ -239,18 +243,27 @@ export default function ChatLayout() {
     }
   }
 
-  async function loadClassParents() {
-    try {
-      dispatch({ type: "LOADING_CLASS_PARENTS", payload: true });
-      const res = await getClassStudentParents();
-      const data = res?.resources?.data;
-      dispatch({ type: "SET_CLASS_PARENTS", payload: Array.isArray(data) ? data : [] });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      dispatch({ type: "LOADING_CLASS_PARENTS", payload: false });
-    }
+async function loadClassParents() {
+  try {
+    dispatch({ type: "LOADING_CLASS_PARENTS", payload: true });
+
+    const res = await getClassStudentParents();
+
+    console.log("Class Student Parents API:", res);
+    console.log("Class Student Parents Data:", res?.resources?.data);
+
+    const data = res?.resources?.data;
+
+    dispatch({
+      type: "SET_CLASS_PARENTS",
+      payload: Array.isArray(data) ? data : [],
+    });
+  } catch (e) {
+    console.error("Class Student Parents API Error:", e);
+  } finally {
+    dispatch({ type: "LOADING_CLASS_PARENTS", payload: false });
   }
+}
 
   async function handleArchive(conv) {
     try {
@@ -355,11 +368,19 @@ export default function ChatLayout() {
     return () => clearTimeout(t);
   }, [state.parentSearch, state.ui.newChat]);
 
-  useEffect(() => {
-    if (state.ui.newChat && state.classParents.length === 0 && !state.loadingClassParents) {
-      loadClassParents();
-    }
-  }, [state.ui.newChat, state.classParents.length, state.loadingClassParents]);
+useEffect(() => {
+  if (
+    state.ui.newChat &&
+    !state.classParentsLoaded &&
+    !state.loadingClassParents
+  ) {
+    loadClassParents();
+  }
+}, [
+  state.ui.newChat,
+  state.classParentsLoaded,
+  state.loadingClassParents,
+]);
 
   return (
     <div className="flex h-screen bg-slate-900">
