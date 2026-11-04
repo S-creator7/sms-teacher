@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState, useCallback } from "react";
+import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { UserContext } from "../components/Provider";
 import { markTeacherAttendance } from "../Utility/attendanceApi";
 import { toast } from "react-toastify";
@@ -55,10 +55,13 @@ export default function Dashboard() {
   const [expandedClassroom, setExpandedClassroom] = useState(null);
   const [attBusy, setAttBusy] = useState(false);
   const [attError, setAttError] = useState("");
+  const attLockRef = useRef(false);
 
   const todayAttendance = profile?.today_attendance || {};
-  const isLoggedInToday = Boolean(todayAttendance?.is_attendance_marked);
-  const hasLoggedOut = Boolean(todayAttendance?.out_time);
+  const isLoggedInToday = Boolean(todayAttendance?.is_attendance_marked || todayAttendance?.in_time);
+  // Backend profile API returns out_time = in_time when out_time is null/not yet logged out
+  const isOutTimeValid = Boolean(todayAttendance?.out_time && todayAttendance?.out_time !== todayAttendance?.in_time);
+  const hasLoggedOut = isOutTimeValid;
 
   const greeting = useMemo(() => formatGreeting(new Date()), []);
   const todayLabel = useMemo(() => getDayLabel(new Date()), []);
@@ -229,7 +232,8 @@ export default function Dashboard() {
 
   const onToggleTeacherAttendance = useCallback(async () => {
     setAttError("");
-    if (hasLoggedOut) return;
+    if (hasLoggedOut || attBusy || attLockRef.current) return;
+    attLockRef.current = true;
     
     try {
       setAttBusy(true);
@@ -303,8 +307,11 @@ export default function Dashboard() {
       }, 5000);
     } finally {
       setAttBusy(false);
+      setTimeout(() => {
+        attLockRef.current = false;
+      }, 1000);
     }
-  }, [refreshProfile, isLoggedInToday, hasLoggedOut]);
+  }, [refreshProfile, isLoggedInToday, hasLoggedOut, attBusy]);
 
   return (
     // COMPACT CHANGE: Reduced padding from p-4 sm:p-6 to p-3 sm:p-4
@@ -340,19 +347,22 @@ export default function Dashboard() {
               {/* COMPACT CHANGE: Reduced font size */}
               <div className="text-xs flex-1">
                 <div className="text-gray-700 font-semibold">In: <span className="font-normal">{todayAttendance?.in_time ? formatTime(todayAttendance.in_time) : '-'}</span></div>
-                <div className="text-gray-700 font-semibold">Out: <span className="font-normal">{todayAttendance?.out_time ? formatTime(todayAttendance.out_time) : '-'}</span></div>
+                <div className="text-gray-700 font-semibold">Out: <span className="font-normal">{isOutTimeValid ? formatTime(todayAttendance.out_time) : '-'}</span></div>
               </div>
               <button
+                type="button"
                 onClick={onToggleTeacherAttendance}
                 disabled={attBusy || hasLoggedOut}
                 // COMPACT CHANGE: Reduced padding from px-3 py-2 to px-2.5 py-1.5
                 // COMPACT CHANGE: Reduced border-radius from rounded-xl to rounded-lg
                 // COMPACT CHANGE: Reduced font size from text-sm to text-xs
-                className={`group inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${hasLoggedOut
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                className={`group inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${attBusy ? "pointer-events-none opacity-60" : ""} ${hasLoggedOut
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                  : isLoggedInToday
+                  ? "bg-red-500 text-white hover:bg-red-600 shadow-red-100"
                   : "bg-[#f86730] text-white hover:bg-[#e55a29]"
                   } flex-shrink-0`}
-                title={isLoggedInToday && !hasLoggedOut ? "Logout" : "Login"}
+                title={hasLoggedOut ? "Logged Out" : isLoggedInToday ? "Logout" : "Login"}
               >
                 <span className="inline-flex items-center justify-center w-4 h-4 rounded-lg bg-white/15">
                   {isLoggedInToday && !hasLoggedOut ? (
@@ -406,6 +416,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-600 font-medium">Unread: {unreadCount}</span>
                   <button
+                type="button"
                     onClick={onMarkAllRead}
                     disabled={notifBulkBusy || unreadCount === 0}
                     className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 font-medium transition-colors duration-200"
@@ -413,6 +424,7 @@ export default function Dashboard() {
                     Mark all read
                   </button>
                   <button
+                type="button"
                     onClick={closeNotifDrawer}
                     className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                     aria-label="Close notifications"
@@ -470,12 +482,14 @@ export default function Dashboard() {
                                 <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{fullMsg}</div>
                                 <div className="mt-2 flex items-center justify-between gap-3">
                                   <button
+                type="button"
                                     onClick={() => setExpandedNotifId(null)}
                                     className="text-xs font-semibold text-blue-600 hover:underline"
                                   >
                                     Collapse
                                   </button>
                                   <button
+                type="button"
                                     onClick={() => onToggleRead(n)}
                                     disabled={notifBusyIds.has(n.notification_id)}
                                     className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors duration-200 ${n.is_read
@@ -652,6 +666,7 @@ export default function Dashboard() {
                     ))}
                     {(c.subjectList || []).length > 3 && expandedClassroom !== c.classroom_id && (
                       <button
+                type="button"
                         onClick={() => toggleSubjectExpansion(c.classroom_id)}
                         className="text-[10px] px-2 py-0.5 rounded-lg bg-gray-200 text-gray-600 font-medium hover:bg-gray-300 transition-colors duration-150"
                       >
@@ -660,6 +675,7 @@ export default function Dashboard() {
                     )}
                     {expandedClassroom === c.classroom_id && (c.subjectList || []).length > 3 && (
                       <button
+                type="button"
                         onClick={() => toggleSubjectExpansion(c.classroom_id)}
                         className="text-[10px] px-2 py-0.5 rounded-lg bg-gray-200 text-gray-600 font-medium hover:bg-gray-300 transition-colors duration-150"
                       >
