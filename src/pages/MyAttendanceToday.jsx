@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState, useRef } from "react";
 import { UserContext } from "../components/Provider";
 import { markTeacherAttendance } from "../Utility/attendanceApi";
 import { toast } from "react-toastify";
@@ -16,11 +16,12 @@ export default function MyAttendanceToday() {
   const { profile, refreshProfile } = useContext(UserContext);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const lockRef = useRef(false);
 
   const today = useMemo(() => profile?.today_attendance || {}, [profile]);
-  const isMarked = Boolean(today?.is_attendance_marked);
+  const isMarked = Boolean(today?.is_attendance_marked || today?.in_time);
   const inTime = today?.in_time || null;
-  const outTime = today?.out_time || null;
+  const outTime = today?.out_time && today?.out_time !== today?.in_time ? today.out_time : null;
   const status =
   today?.status && today.status !== "-"
     ? today.status
@@ -36,6 +37,8 @@ export default function MyAttendanceToday() {
 
   async function onToggle() {
     setError("");
+    if (outTime || busy || lockRef.current) return;
+    lockRef.current = true;
     try {
       setBusy(true);
       // Try browser geolocation; fallback to zeros if unavailable
@@ -56,6 +59,9 @@ export default function MyAttendanceToday() {
       toast.error(msg);
     } finally {
       setBusy(false);
+      setTimeout(() => {
+        lockRef.current = false;
+      }, 1000);
     }
   }
 
@@ -65,10 +71,15 @@ export default function MyAttendanceToday() {
         <h2 className="text-base sm:text-lg font-semibold text-gray-800">Today</h2>
         <button
           onClick={onToggle}
-          disabled={busy}
+          type="button"
+          disabled={busy || Boolean(outTime)}
           className={`group inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+            busy ? "pointer-events-none opacity-60" : ""
+          } ${
             isMarked && !outTime
               ? "bg-gray-300 text-gray-700"
+              : outTime
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
         : "bg-[#f86730] text-white hover:bg-[#e55a29]"
           }`}
           title={isMarked && !outTime ? "Logout" : "Login"}

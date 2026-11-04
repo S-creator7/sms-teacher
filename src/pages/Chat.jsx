@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 
-import { 
-  FaPaperclip, 
-  FaPaperPlane, 
-  FaSearch, 
-  FaArchive, 
-  FaInfoCircle, 
+import {
+  FaPaperclip,
+  FaPaperPlane,
+  FaSearch,
+  FaArchive,
+  FaInfoCircle,
   FaEdit,
   FaTrash,
   FaShare,
@@ -96,7 +96,7 @@ export default function Chat() {
     try {
       const res = await getUnreadCount();
       setUnreadCount(res?.resources?.unread_count || 0);
-    } catch {}
+    } catch { }
   }
 
   async function loadUnreadSubscription() {
@@ -214,11 +214,12 @@ export default function Chat() {
     return () => clearTimeout(t);
   }, [parentSearch, showNewChat]);
 
-  useEffect(() => {
-    if (showNewChat && classParents.length === 0 && !loadingClassParents) {
-      loadClassParents();
-    }
-  }, [showNewChat, classParents.length, loadingClassParents]);
+ useEffect(() => {
+  if (!showNewChat || classParentsLoaded.current) return;
+
+  classParentsLoaded.current = true;
+  loadClassParents();
+}, [showNewChat]);
 
   useEffect(() => {
     if (!selectedConversation) return;
@@ -402,9 +403,8 @@ export default function Chat() {
   return (
     <div className="min-h-full w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex overflow-hidden text-sm">
       <div
-        className={`${
-          selectedConversation ? "hidden lg:flex" : "flex"
-        } w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0`}
+        className={`${selectedConversation ? "hidden lg:flex" : "flex"
+          } w-full lg:w-[25%] border-r border-gray-200 flex flex-col bg-white min-h-0`}
       >
         <div className="bg-[#f7f9fc] px-5 py-2.5 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -449,11 +449,10 @@ export default function Chat() {
                 key={tab.key}
                 type="button"
                 onClick={() => setConversationStatus(tab.key)}
-                className={`flex-1 px-3.5 py-1.5 text-xs rounded-xl transition-colors ${
-                  conversationStatus === tab.key
+                className={`flex-1 px-3.5 py-1.5 text-xs rounded-xl transition-colors ${conversationStatus === tab.key
                     ? "bg-blue-400 text-white shadow-sm"
                     : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -477,9 +476,8 @@ export default function Chat() {
                 <div
                   key={conv.conversation_id}
                   onClick={() => handleSelectConversation(conv)}
-                  className={`px-5 py-3.5 flex items-center gap-3 cursor-pointer border-b border-gray-100 transition-colors ${
-                    isSelected ? "bg-blue-50 border-l-4 border-l-blue-300" : "hover:bg-gray-50"
-                  }`}
+                  className={`px-5 py-3.5 flex items-center gap-3 cursor-pointer border-b border-gray-100 transition-colors ${isSelected ? "bg-blue-50 border-l-4 border-l-blue-300" : "hover:bg-gray-50"
+                    }`}
                 >
                   <div className="w-9 h-9 rounded-full bg-orange-300 flex items-center justify-center text-xs font-semibold text-white">
                     {`${conv.parent_first_name || ""} ${conv.parent_last_name || ""}`.trim()[0]?.toUpperCase() ||
@@ -537,9 +535,8 @@ export default function Chat() {
       </div>
 
       <div
-        className={`${
-          selectedConversation ? "flex" : "hidden lg:flex"
-        } flex-1 flex flex-col bg-slate-900 min-h-0`}
+        className={`${selectedConversation ? "flex" : "hidden lg:flex"
+          } flex-1 flex flex-col bg-slate-900 min-h-0`}
       >
         {!selectedConversation && (
           <div className="flex-1 flex items-center justify-center bg-[#f8f9fa]">
@@ -554,20 +551,17 @@ export default function Chat() {
             <div className="bg-[#f0f2f5] px-4 py-2 border-b border-gray-300 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white">
-                  {`${selectedConversation.parent_first_name || ""} ${
-                    selectedConversation.parent_last_name || ""
-                  }`.trim()[0]?.toUpperCase() || "P"}
+                  {`${selectedConversation.parent_first_name || ""} ${selectedConversation.parent_last_name || ""
+                    }`.trim()[0]?.toUpperCase() || "P"}
                 </div>
                 <div>
                   <div className="font-semibold text-gray-900 text-sm">
-                    {`${selectedConversation.parent_first_name || ""} ${
-                      selectedConversation.parent_last_name || ""
-                    }`.trim()}
+                    {`${selectedConversation.parent_first_name || ""} ${selectedConversation.parent_last_name || ""
+                      }`.trim()}
                   </div>
                   <div className="text-xs text-gray-600">
-                    {`${selectedConversation.student_first_name || ""} ${
-                      selectedConversation.student_last_name || ""
-                    }`.trim()}
+                    {`${selectedConversation.student_first_name || ""} ${selectedConversation.student_last_name || ""
+                      }`.trim()}
                     {selectedConversation.subject_name
                       ? ` • ${selectedConversation.subject_name}`
                       : ""}
@@ -637,20 +631,18 @@ export default function Chat() {
                             <FaEllipsisV size={10} className="text-gray-600" />
                           </button>
                         )}
-                        
-                        <div className={`px-3 py-2.5 rounded-2xl shadow-sm ${
-                          isMe
+
+                        <div className={`px-3 py-2.5 rounded-2xl shadow-sm ${isMe
                             ? "bg-blue-500/90 text-white rounded-br-md"
                             : "bg-white text-gray-900 rounded-bl-md border border-gray-200"
-                        }`}>
+                          }`}>
                           {m.message_type === "document" && m.file_url ? (
                             <a
                               href={m.file_url}
                               target="_blank"
                               rel="noreferrer"
-                              className={`flex items-center gap-2 font-medium ${
-                                isMe ? "text-blue-100" : "text-blue-600"
-                              } hover:underline`}
+                              className={`flex items-center gap-2 font-medium ${isMe ? "text-blue-100" : "text-blue-600"
+                                } hover:underline`}
                             >
                               <FaPaperclip size={14} />
                               {m.file_name || m.message_text}
@@ -856,8 +848,10 @@ export default function Chat() {
 
             <div className="border-t pt-6">
               <div className="font-semibold text-gray-700 mb-4">Select from Class</div>
-              {loadingClassParents && (
-                <div className="text-sm text-gray-500 text-center py-4">Loading classes...</div>
+              {!loadingClassParents && classParents.length === 0 && (
+                <div className="text-sm text-gray-500 text-center py-4">
+                  No classes available
+                </div>
               )}
               {!loadingClassParents && classParents.length > 0 && (
                 <div className="space-y-4">
@@ -1010,12 +1004,10 @@ export default function Chat() {
                     conv.conversation_id !== selectedConversation.conversation_id
                 )
                 .map((conv) => {
-                  const name = `${conv.parent_first_name || ""} ${
-                    conv.parent_last_name || ""
-                  }`.trim();
-                  const studentName = `${conv.student_first_name || ""} ${
-                    conv.student_last_name || ""
-                  }`.trim();
+                  const name = `${conv.parent_first_name || ""} ${conv.parent_last_name || ""
+                    }`.trim();
+                  const studentName = `${conv.student_first_name || ""} ${conv.student_last_name || ""
+                    }`.trim();
                   return (
                     <button
                       key={conv.conversation_id}
@@ -1042,8 +1034,8 @@ export default function Chat() {
                   !selectedConversation ||
                   conv.conversation_id !== selectedConversation.conversation_id
               ).length === 0 && (
-                <div className="text-center text-gray-500 py-8">No other conversations available</div>
-              )}
+                  <div className="text-center text-gray-500 py-8">No other conversations available</div>
+                )}
             </div>
           </div>
         </div>

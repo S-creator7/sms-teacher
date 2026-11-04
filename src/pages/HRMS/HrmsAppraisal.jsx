@@ -45,9 +45,9 @@ const API_TO_UI_SCALE = 1 / UI_TO_API_SCALE;
 
 const toApiScore = (v) => Math.round((Number(v) || 0) * UI_TO_API_SCALE);
 const toUiScore = (v) => {
-  const n = Number(v);           // handles "100.00" strings
+  const n = Number(v);
   if (!Number.isFinite(n)) return 0;
-  return Math.round(n * API_TO_UI_SCALE * 2) / 2;
+  return Math.round(n * UI_TO_API_SCALE * 2) / 2;
 };
 
 const toArray = (raw) => {
@@ -186,10 +186,13 @@ export default function HrmsAppraisal() {
     // Merge cycle fields from the flat response over the dropdown's cycle.
     const cycleFromApi = {
       ...cycle,
-      id: raw.cycle_id ?? cycle.id,
-      title: raw.cycle_name ?? cycle.title,
-      academic_year: raw.academic_year ?? cycle.academic_year,
-      status: raw.cycle_status ?? cycle.status
+      id: cycle.id,
+      title: cycle.title,
+      academic_year: cycle.academic_year,
+      start_date: cycle.start_date,
+      end_date: cycle.end_date,
+      self_appraisal_deadline: cycle.self_appraisal_deadline,
+      status: cycle.status
     };
 
     const self_appraisal = {
@@ -257,7 +260,9 @@ export default function HrmsAppraisal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCycleId]);
 
-  const cycle = details?.cycle || cycles.find((c) => c.id === selectedCycleId) || {};
+  const cycle = cycles.find(
+    (c) => String(c.id) === String(selectedCycleId)
+  ) || details?.cycle || {};
   const selfAppraisal = details?.self_appraisal;
   const hodReview = details?.hod_review;
   const principalReview = details?.principal_review;
@@ -372,7 +377,10 @@ export default function HrmsAppraisal() {
           {cycles.length > 0 && (
             <select
               value={selectedCycleId ?? ""}
-              onChange={(e) => setSelectedCycleId(parseInt(e.target.value, 10))}
+              onChange={(e) => {
+                setDetails(null);
+                setSelectedCycleId(Number(e.target.value));
+              }}
               className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none"
             >
               {cycles.map((c) => (
