@@ -371,14 +371,14 @@ export default function HrmsDashboard() {
                 <div className="grid grid-cols-2 gap-3">
                   {leaveBalances.map((b, idx) => (
                     <div
-                      key={b.leave_type_code || idx}
+                      key={b.balance_id || idx}
                       className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-center"
                     >
                       <span className="text-[11px] font-bold text-gray-600 truncate block">
-                        {b.leave_type_name || b.leave_type_code}
+                        {b.leave_name || b.leave_code}
                       </span>
                       <p className="text-xl font-black text-orange-600 mt-1">
-                        {b.remaining_days ?? b.balance ?? 0}
+                        {b.closing_balance ?? 0}
                       </p>
                       <span className="text-[10px] text-gray-400">Days Remaining</span>
                     </div>

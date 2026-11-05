@@ -442,8 +442,8 @@ export default function HrmsLeaves() {
         <button
           onClick={() => setActiveTab("LEAVES")}
           className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition ${activeTab === "LEAVES"
-              ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
-              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
+            : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
         >
           <LuCalendar /> Leave Balances & History
@@ -451,8 +451,8 @@ export default function HrmsLeaves() {
         <button
           onClick={() => setActiveTab("GATE_PASSES")}
           className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition ${activeTab === "GATE_PASSES"
-              ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
-              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
+            : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
         >
           <LuTicketCheck /> Gate Passes
@@ -493,12 +493,20 @@ export default function HrmsLeaves() {
                   </div>
                   <div className="mt-3 flex items-baseline gap-2">
                     <span
-                      className={`text-3xl font-extrabold ${Number(b.closing_balance ?? b.remaining_days ?? b.balance ?? 0) < 0
-                          ? "text-rose-600"
-                          : "text-gray-900"
+                      className={`text-3xl font-extrabold ${(
+                        Number(b.allocated_days ?? 0) -
+                        Number(b.used_days ?? 0) -
+                        Number(b.pending_days ?? 0)
+                      ) < 0
+                        ? "text-rose-600"
+                        : "text-gray-900"
                         }`}
                     >
-                      {b.closing_balance ?? b.remaining_days ?? b.balance ?? 0}
+                      {(
+                        Number(b.allocated_days ?? 0) -
+                        Number(b.used_days ?? 0) -
+                        Number(b.pending_days ?? 0)
+                      ).toFixed(1)}
                     </span>
                     <span className="text-xs font-semibold text-emerald-600">
                       Remaining

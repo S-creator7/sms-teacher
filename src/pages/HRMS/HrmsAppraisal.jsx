@@ -44,10 +44,12 @@ const UI_TO_API_SCALE = 20;
 const API_TO_UI_SCALE = 1 / UI_TO_API_SCALE;
 
 const toApiScore = (v) => Math.round((Number(v) || 0) * UI_TO_API_SCALE);
+
+// FIX 1: Changed to multiply by API_TO_UI_SCALE (divide by 20) instead of multiplying by 20.
 const toUiScore = (v) => {
   const n = Number(v);
   if (!Number.isFinite(n)) return 0;
-  return Math.round(n * UI_TO_API_SCALE * 2) / 2;
+  return Math.round(n * API_TO_UI_SCALE * 2) / 2;
 };
 
 const toArray = (raw) => {
@@ -90,7 +92,9 @@ const parseComments = (blob = "") => {
     training_needs: "",
     goals_for_next_year: ""
   };
-  if (!blob || typeof blob !== "string") return out;
+  
+  // FIX 4: Safeguard against backend sending literal "string" placeholder
+  if (!blob || typeof blob !== "string" || blob === "string") return out;
 
   const labelToKey = Object.fromEntries(
     Object.entries(COMMENT_LABELS).map(([k, v]) => [v, k])
@@ -177,7 +181,7 @@ export default function HrmsAppraisal() {
       comments: ""
     }));
 
-    // Compute overall self-score from the four components (API doesn't return self_score on GET).
+    // Compute overall self-score from the four components.
     const valid = kra_scores.map((k) => k.score).filter((n) => n > 0);
     const overall_score = valid.length
       ? valid.reduce((a, b) => a + b, 0) / valid.length
@@ -197,7 +201,7 @@ export default function HrmsAppraisal() {
 
     const self_appraisal = {
       appraisal_id: raw.appraisal_id,
-      status: raw.status,                       // SELF_SUBMITTED | HOD_REVIEWED | ...
+      status: raw.status, // FIX 3: Map to the actual API status so the UI reflects reality
       self_submitted_at: raw.self_submitted_at,
       kra_scores,
       overall_score,
@@ -213,7 +217,7 @@ export default function HrmsAppraisal() {
           total_score: raw.hod_total_score != null ? Number(raw.hod_total_score) : null,
           remarks: raw.hod_remarks,
           reviewed_at: raw.hod_reviewed_at,
-          status: raw.status // overall status doubles as HOD status signal
+          status: "HOD_REVIEWED" // FIX 2: Don't use raw.status here so the badge stays correct
         }
         : null;
 
@@ -223,7 +227,8 @@ export default function HrmsAppraisal() {
         raw.principal_grade != null ||
         raw.principal_remarks != null
         ? {
-          final_score: raw.principal_final_score != null ? Number(raw.principal_final_score) : null,
+          // FIX 1: Apply toUiScore to convert 100 back down to 5.0
+          final_score: raw.principal_final_score != null ? toUiScore(raw.principal_final_score) : null,
           grade: raw.principal_grade,
           remarks: raw.principal_remarks,
           increment_pct: raw.management_approved_increment_pct != null
