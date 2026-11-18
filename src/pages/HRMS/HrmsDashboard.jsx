@@ -378,7 +378,7 @@ export default function HrmsDashboard() {
                         {b.leave_name || b.leave_code}
                       </span>
                       <p className="text-xl font-black text-orange-600 mt-1">
-                        {b.closing_balance ?? 0}
+                        {b.remaining_days ?? 0}
                       </p>
                       <span className="text-[10px] text-gray-400">Days Remaining</span>
                     </div>

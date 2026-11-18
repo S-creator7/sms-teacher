@@ -96,7 +96,7 @@ const DOC_TYPES = [
 function cleanValue(v, fallback = "-") {
   if (v === null || v === undefined) return fallback;
 
-  
+
   if (typeof v === "number") {
     return v === 0 ? fallback : String(v);
   }
@@ -1474,19 +1474,15 @@ export default function HrmsProfile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-gray-700">Phone</label>
-
                   <input
                     type="tel"
                     inputMode="numeric"
                     maxLength={10}
                     value={profileForm.phone || ""}
                     onChange={(e) =>
-                      setModalState({
-                        ...modalState,
-                        data: {
-                          ...modalState.data,
-                          phone: e.target.value.replace(/\D/g, "").slice(0, 10),
-                        },
+                      setProfileForm({
+                        ...profileForm,
+                        phone: e.target.value.replace(/\D/g, "").slice(0, 10),
                       })
                     }
                     required
@@ -1494,19 +1490,20 @@ export default function HrmsProfile() {
                     title="Phone number must be exactly 10 digits"
                     className="w-full mt-1 p-2 border border-gray-200 rounded-xl"
                   />
-
                 </div>
                 <div>
                   <label className="font-semibold text-gray-700">
                     Alternate Phone
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     value={profileForm.alternate_phone || ""}
                     onChange={(e) =>
                       setProfileForm({
                         ...profileForm,
-                        phone: e.target.value.replace(/\D/g, "").slice(0, 10),
+                        alternate_phone: e.target.value.replace(/\D/g, "").slice(0, 10),
                       })
                     }
                     className="w-full mt-1 p-2 border border-gray-200 rounded-xl"
