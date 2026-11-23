@@ -614,7 +614,6 @@ export default function HrmsAssets() {
                     <th className="p-3">Effective Date</th>
                     <th className="p-3">From Campus / Dept</th>
                     <th className="p-3">To Campus / Dept</th>
-                    <th className="p-3">Designation</th>
                     <th className="p-3">Transfer Order / Reason</th>
                   </tr>
                 </thead>
@@ -634,10 +633,6 @@ export default function HrmsAssets() {
                       <td className="p-3 font-semibold text-orange-600">
                         {orDash(t.to_school_name)} &bull;{" "}
                         {orDash(t.to_department_name)}
-                      </td>
-                      <td className="p-3 text-gray-700">
-                        {orDash(t.from_designation_id)} →{" "}
-                        {orDash(t.to_designation_id)}
                       </td>
                       <td className="p-3 text-gray-500 max-w-xs">
                         {orDash(t.transfer_order_ref || t.transfer_reason)}
