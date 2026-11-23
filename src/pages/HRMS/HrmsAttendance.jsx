@@ -223,41 +223,37 @@ export default function HrmsAttendance() {
       <div className="flex items-center gap-2 border-b border-gray-200 pb-1 overflow-x-auto">
         <button
           onClick={() => handleTabChange("LOGS")}
-          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-            activeTab === "LOGS"
+          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${activeTab === "LOGS"
               ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          }`}
+            }`}
         >
           <LuCalendar /> Monthly Punch Logs
         </button>
         <button
           onClick={() => handleTabChange("DUTIES")}
-          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-            activeTab === "DUTIES"
+          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${activeTab === "DUTIES"
               ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          }`}
+            }`}
         >
           <LuBriefcase /> Duty Rosters ({duties.length})
         </button>
         <button
           onClick={() => handleTabChange("PROXIES")}
-          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-            activeTab === "PROXIES"
+          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${activeTab === "PROXIES"
               ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          }`}
+            }`}
         >
           <LuClock /> Proxy Substitution
         </button>
         <button
           onClick={() => handleTabChange("SHIFT")}
-          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-            activeTab === "SHIFT"
+          className={`px-4 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition whitespace-nowrap ${activeTab === "SHIFT"
               ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          }`}
+            }`}
         >
           <LuUserCheck /> Shift Timings
         </button>
@@ -385,7 +381,12 @@ export default function HrmsAttendance() {
                           )}
                         </td>
                         <td className="p-3">
-                          {getStatusBadge(log.status || "PRESENT")}
+                          <span className={getStatusBadge(log.status || "PRESENT")}>
+                            {(log.status || "PRESENT")
+                              .replace(/_/g, " ")
+                              .toLowerCase()
+                              .replace(/\b\w/g, (char) => char.toUpperCase())}
+                          </span>
                         </td>
                         <td className="p-3 text-gray-500">
                           {log.remarks || "-"}
